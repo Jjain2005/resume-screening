@@ -1,0 +1,136 @@
+{
+  "sentence-transformers/all-MiniLM-L6-v2": {
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "threshold": 0.65,
+    "precision": 1.0,
+    "recall": 0.25,
+    "f1_score": 0.4,
+    "tp": 4,
+    "fp": 0,
+    "tn": 4,
+    "fn": 12,
+    "load_time_sec": 5.09,
+    "total_inference_time_sec": 0.743,
+    "avg_inference_ms_per_pair": 37.13,
+    "memory_usage_mb": -92.2,
+    "category_accuracy": {
+      "Artificial Intelligence and Machine Learning": 0.25,
+      "IT and Software Development": 0.67,
+      "Project Management": 0.0,
+      "Marketing": 0.5,
+      "Finance and Accounting": 0.5,
+      "HR and Recruitment": 0.5,
+      "Sales": 0.0,
+      "Business Operations": 0.0
+    },
+    "false_positives": [],
+    "false_negatives": [
+      {
+        "id": "pair_01",
+        "req": "Experience in Natural Language Processing and text classification",
+        "evidence": "Engineered multi-class NLP models to categorize customer sentiment using BERT and transformers.",
+        "score": 0.46433132886886597
+      },
+      {
+        "id": "pair_02",
+        "req": "Proficiency in deep learning frameworks like PyTorch or TensorFlow",
+        "evidence": "Trained convolutional neural networks using PyTorch on AWS GPU clusters.",
+        "score": 0.5018497705459595
+      },
+      {
+        "id": "pair_03",
+        "req": "Experience building predictive machine learning models in production",
+        "evidence": "Developed and deployed a customer churn prediction pipeline using scikit-learn that reduced churn by 12%.",
+        "score": 0.3001347780227661
+      },
+      {
+        "id": "pair_05",
+        "req": "Strong experience developing microservices with FastAPI or Flask in Python",
+        "evidence": "Architected low-latency REST APIs using FastAPI with Pydantic validation serving 5,000 QPS.",
+        "score": 0.5103923082351685
+      },
+      {
+        "id": "pair_09",
+        "req": "Knowledge of continuous integration and continuous deployment pipelines (CI/CD)",
+        "evidence": "Configured automated GitHub Actions workflows for testing, linting, and staging deployments.",
+        "score": 0.4638369381427765
+      },
+      {
+        "id": "pair_10",
+        "req": "Proven track record running Agile Scrum ceremonies and sprint planning",
+        "evidence": "Facilitated bi-weekly sprint planning, daily standups, and retrospectives as Scrum Master for 12 engineers.",
+        "score": 0.6188839673995972
+      },
+      {
+        "id": "pair_11",
+        "req": "Experience with project management software like JIRA for tracking roadmaps",
+        "evidence": "Tracked team velocity and managed backlog epics and bug triage workflows in Jira.",
+        "score": 0.5764375925064087
+      },
+      {
+        "id": "pair_12",
+        "req": "Search Engine Optimization (SEO) and technical website audit experience",
+        "evidence": "Implemented technical SEO improvements and structured data, raising organic search visibility by 35%.",
+        "score": 0.4847065210342407
+      },
+      {
+        "id": "pair_14",
+        "req": "Financial modeling and discounted cash flow (DCF) valuation experience",
+        "evidence": "Constructed 5-year DCF models and revenue forecast models to evaluate prospective acquisitions.",
+        "score": 0.5519810318946838
+      },
+      {
+        "id": "pair_16",
+        "req": "Full lifecycle talent acquisition and technical recruiting",
+        "evidence": "Sourced, screened, and closed 40+ engineering candidates annually utilizing LinkedIn Recruiter and ATS.",
+        "score": 0.4936543405056
+      },
+      {
+        "id": "pair_17",
+        "req": "B2B enterprise sales and CRM pipeline management using Salesforce",
+        "evidence": "Managed pipeline of 50+ enterprise accounts in Salesforce and achieved 115% of annual sales quota.",
+        "score": 0.5439972877502441
+      },
+      {
+        "id": "pair_18",
+        "req": "Process optimization and Lean Six Sigma methodology application",
+        "evidence": "Led DMAIC Lean Six Sigma project that eliminated manufacturing bottlenecks and saved $120,000 annually.",
+        "score": 0.6090664863586426
+      }
+    ]
+  },
+  "BAAI/bge-small-en-v1.5": {
+    "model_name": "BAAI/bge-small-en-v1.5",
+    "threshold": 0.65,
+    "precision": 0.9412,
+    "recall": 1.0,
+    "f1_score": 0.9697,
+    "tp": 16,
+    "fp": 1,
+    "tn": 3,
+    "fn": 0,
+    "load_time_sec": 27.28,
+    "total_inference_time_sec": 0.086,
+    "avg_inference_ms_per_pair": 4.31,
+    "memory_usage_mb": -177.3,
+    "category_accuracy": {
+      "Artificial Intelligence and Machine Learning": 1.0,
+      "IT and Software Development": 0.83,
+      "Project Management": 1.0,
+      "Marketing": 1.0,
+      "Finance and Accounting": 1.0,
+      "HR and Recruitment": 1.0,
+      "Sales": 1.0,
+      "Business Operations": 1.0
+    },
+    "false_positives": [
+      {
+        "id": "pair_08",
+        "req": "Experience building frontend applications using React and TypeScript",
+        "evidence": "Built enterprise web dashboards using Angular 14 and RxJS state management.",
+        "score": 0.737324595451355
+      }
+    ],
+    "false_negatives": []
+  }
+}

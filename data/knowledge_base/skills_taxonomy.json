@@ -1,0 +1,523 @@
+{
+  "version": "1.0.0",
+  "categories": [
+    "Artificial Intelligence and Machine Learning",
+    "IT and Software Development",
+    "Project Management",
+    "Business Operations",
+    "Data Engineering and Analytics",
+    "Finance and Accounting",
+    "Marketing",
+    "HR and Recruitment",
+    "Sales"
+  ],
+  "skills": [
+    {
+      "id": "sk_nlp",
+      "canonical_name": "Natural Language Processing",
+      "category": "Artificial Intelligence and Machine Learning",
+      "description": "Techniques for processing, understanding, and generating human language.",
+      "aliases": ["NLP", "Natural Language Understanding", "NLU", "Text Mining", "Computational Linguistics"],
+      "relationships": [
+        {"target": "Machine Learning", "type": "subfield_of"},
+        {"target": "Deep Learning", "type": "related"},
+        {"target": "Large Language Models", "type": "parent_of"},
+        {"target": "Computer Vision", "type": "related"}
+      ]
+    },
+    {
+      "id": "sk_ml",
+      "canonical_name": "Machine Learning",
+      "category": "Artificial Intelligence and Machine Learning",
+      "description": "Algorithms and statistical models that computer systems use to perform tasks without explicit instructions.",
+      "aliases": ["ML", "Machine Learning Engineering", "Statistical Learning"],
+      "relationships": [
+        {"target": "Deep Learning", "type": "parent_of"},
+        {"target": "Natural Language Processing", "type": "parent_of"},
+        {"target": "Computer Vision", "type": "parent_of"},
+        {"target": "Data Science", "type": "related"},
+        {"target": "Scikit-Learn", "type": "tool_of"}
+      ]
+    },
+    {
+      "id": "sk_dl",
+      "canonical_name": "Deep Learning",
+      "category": "Artificial Intelligence and Machine Learning",
+      "description": "Machine learning based on artificial neural networks with representation learning.",
+      "aliases": ["DL", "Neural Networks", "Artificial Neural Networks", "ANN", "Deep Neural Networks"],
+      "relationships": [
+        {"target": "Machine Learning", "type": "subfield_of"},
+        {"target": "PyTorch", "type": "tool_of"},
+        {"target": "TensorFlow", "type": "tool_of"},
+        {"target": "Computer Vision", "type": "related"},
+        {"target": "Natural Language Processing", "type": "related"}
+      ]
+    },
+    {
+      "id": "sk_cv",
+      "canonical_name": "Computer Vision",
+      "category": "Artificial Intelligence and Machine Learning",
+      "description": "Methods for acquiring, processing, analyzing and understanding digital images and video.",
+      "aliases": ["CV", "Image Processing", "Vision AI"],
+      "relationships": [
+        {"target": "Machine Learning", "type": "subfield_of"},
+        {"target": "Deep Learning", "type": "related"},
+        {"target": "OpenCV", "type": "tool_of"}
+      ]
+    },
+    {
+      "id": "sk_pytorch",
+      "canonical_name": "PyTorch",
+      "category": "Artificial Intelligence and Machine Learning",
+      "description": "Open source machine learning framework based on the Torch library.",
+      "aliases": ["Torch"],
+      "relationships": [
+        {"target": "TensorFlow", "type": "related_not_equivalent"},
+        {"target": "Deep Learning", "type": "applied_to"},
+        {"target": "Python", "type": "requires"}
+      ]
+    },
+    {
+      "id": "sk_tensorflow",
+      "canonical_name": "TensorFlow",
+      "category": "Artificial Intelligence and Machine Learning",
+      "description": "End-to-end open source platform for machine learning developed by Google.",
+      "aliases": ["TF", "TF2", "Keras"],
+      "relationships": [
+        {"target": "PyTorch", "type": "related_not_equivalent"},
+        {"target": "Deep Learning", "type": "applied_to"},
+        {"target": "Python", "type": "requires"}
+      ]
+    },
+    {
+      "id": "sk_scikit_learn",
+      "canonical_name": "Scikit-Learn",
+      "category": "Artificial Intelligence and Machine Learning",
+      "description": "Python library for predictive data analysis and classical machine learning algorithms.",
+      "aliases": ["sklearn", "scikit learn"],
+      "relationships": [
+        {"target": "Machine Learning", "type": "applied_to"},
+        {"target": "Python", "type": "requires"}
+      ]
+    },
+    {
+      "id": "sk_llm",
+      "canonical_name": "Large Language Models",
+      "category": "Artificial Intelligence and Machine Learning",
+      "description": "Advanced neural language models trained on massive text corpora for generative AI tasks.",
+      "aliases": ["LLM", "LLMs", "Generative AI", "GenAI", "Transformers"],
+      "relationships": [
+        {"target": "Natural Language Processing", "type": "subfield_of"},
+        {"target": "Deep Learning", "type": "subfield_of"}
+      ]
+    },
+    {
+      "id": "sk_python",
+      "canonical_name": "Python",
+      "category": "IT and Software Development",
+      "description": "High-level general-purpose programming language known for readability and ecosystem.",
+      "aliases": ["Python 3", "Python3", "Py"],
+      "relationships": [
+        {"target": "FastAPI", "type": "parent_of"},
+        {"target": "Django", "type": "parent_of"},
+        {"target": "Flask", "type": "parent_of"}
+      ]
+    },
+    {
+      "id": "sk_fastapi",
+      "canonical_name": "FastAPI",
+      "category": "IT and Software Development",
+      "description": "Modern, fast web framework for building APIs with Python based on standard Python type hints.",
+      "aliases": ["Fast API"],
+      "relationships": [
+        {"target": "Flask", "type": "related_not_equivalent"},
+        {"target": "Django", "type": "related_not_equivalent"},
+        {"target": "Python", "type": "requires"}
+      ]
+    },
+    {
+      "id": "sk_flask",
+      "canonical_name": "Flask",
+      "category": "IT and Software Development",
+      "description": "Micro web framework written in Python.",
+      "aliases": ["Flask Framework"],
+      "relationships": [
+        {"target": "FastAPI", "type": "related_not_equivalent"},
+        {"target": "Django", "type": "related_not_equivalent"},
+        {"target": "Python", "type": "requires"}
+      ]
+    },
+    {
+      "id": "sk_django",
+      "canonical_name": "Django",
+      "category": "IT and Software Development",
+      "description": "High-level Python web framework that encourages rapid development and clean design.",
+      "aliases": ["Django REST Framework", "DRF"],
+      "relationships": [
+        {"target": "FastAPI", "type": "related_not_equivalent"},
+        {"target": "Flask", "type": "related_not_equivalent"},
+        {"target": "Python", "type": "requires"}
+      ]
+    },
+    {
+      "id": "sk_javascript",
+      "canonical_name": "JavaScript",
+      "category": "IT and Software Development",
+      "description": "Dynamic programming language commonly used for web client and server development.",
+      "aliases": ["JS", "ES6", "ECMAScript"],
+      "relationships": [
+        {"target": "TypeScript", "type": "related"},
+        {"target": "Node.js", "type": "runtime"},
+        {"target": "React", "type": "ecosystem"}
+      ]
+    },
+    {
+      "id": "sk_typescript",
+      "canonical_name": "TypeScript",
+      "category": "IT and Software Development",
+      "description": "Strict syntactical superset of JavaScript that adds static typing.",
+      "aliases": ["TS"],
+      "relationships": [
+        {"target": "JavaScript", "type": "superset_of"}
+      ]
+    },
+    {
+      "id": "sk_react",
+      "canonical_name": "React",
+      "category": "IT and Software Development",
+      "description": "Front-end JavaScript library for building user interfaces based on components.",
+      "aliases": ["React.js", "ReactJS"],
+      "relationships": [
+        {"target": "Angular", "type": "related_not_equivalent"},
+        {"target": "Vue.js", "type": "related_not_equivalent"},
+        {"target": "JavaScript", "type": "requires"}
+      ]
+    },
+    {
+      "id": "sk_angular",
+      "canonical_name": "Angular",
+      "category": "IT and Software Development",
+      "description": "TypeScript-based open-source web application framework led by the Angular Team at Google.",
+      "aliases": ["AngularJS", "Angular 2+"],
+      "relationships": [
+        {"target": "React", "type": "related_not_equivalent"},
+        {"target": "Vue.js", "type": "related_not_equivalent"},
+        {"target": "TypeScript", "type": "requires"}
+      ]
+    },
+    {
+      "id": "sk_docker",
+      "canonical_name": "Docker",
+      "category": "IT and Software Development",
+      "description": "Platform for developing, shipping, and running applications in lightweight containers.",
+      "aliases": ["Containerization", "Docker Containers", "Docker Compose"],
+      "relationships": [
+        {"target": "Kubernetes", "type": "complementary"},
+        {"target": "Podman", "type": "related_not_equivalent"}
+      ]
+    },
+    {
+      "id": "sk_kubernetes",
+      "canonical_name": "Kubernetes",
+      "category": "IT and Software Development",
+      "description": "Open-source system for automating deployment, scaling, and management of containerized apps.",
+      "aliases": ["K8s", "K8", "Kube"],
+      "relationships": [
+        {"target": "Docker", "type": "complementary"},
+        {"target": "DevOps", "type": "subfield_of"}
+      ]
+    },
+    {
+      "id": "sk_postgresql",
+      "canonical_name": "PostgreSQL",
+      "category": "IT and Software Development",
+      "description": "Powerful, open source object-relational database system.",
+      "aliases": ["Postgres", "Postgre", "PGSQL"],
+      "relationships": [
+        {"target": "MySQL", "type": "related_not_equivalent"},
+        {"target": "SQL", "type": "subfield_of"}
+      ]
+    },
+    {
+      "id": "sk_mysql",
+      "canonical_name": "MySQL",
+      "category": "IT and Software Development",
+      "description": "Open-source relational database management system.",
+      "aliases": ["My SQL"],
+      "relationships": [
+        {"target": "PostgreSQL", "type": "related_not_equivalent"},
+        {"target": "SQL", "type": "subfield_of"}
+      ]
+    },
+    {
+      "id": "sk_sql",
+      "canonical_name": "SQL",
+      "category": "IT and Software Development",
+      "description": "Structured Query Language used to manage and query relational databases.",
+      "aliases": ["Structured Query Language", "RDBMS Queries"],
+      "relationships": [
+        {"target": "PostgreSQL", "type": "parent_of"},
+        {"target": "MySQL", "type": "parent_of"}
+      ]
+    },
+    {
+      "id": "sk_git",
+      "canonical_name": "Git",
+      "category": "IT and Software Development",
+      "description": "Distributed version control system for tracking changes in source code during software development.",
+      "aliases": ["GitHub", "GitLab", "Version Control", "Bitbucket"],
+      "relationships": [
+        {"target": "CI/CD", "type": "complementary"}
+      ]
+    },
+    {
+      "id": "sk_cicd",
+      "canonical_name": "CI/CD",
+      "category": "IT and Software Development",
+      "description": "Continuous Integration and Continuous Delivery / Deployment practices and automation.",
+      "aliases": ["Continuous Integration", "Continuous Delivery", "Continuous Deployment", "Jenkins", "GitHub Actions"],
+      "relationships": [
+        {"target": "Docker", "type": "complementary"},
+        {"target": "Kubernetes", "type": "complementary"}
+      ]
+    },
+    {
+      "id": "sk_agile",
+      "canonical_name": "Agile Methodologies",
+      "category": "Project Management",
+      "description": "Iterative approach to project management and software development that helps teams deliver value faster.",
+      "aliases": ["Agile", "Agile Software Development", "Agile Methodology", "Agile Mindset"],
+      "relationships": [
+        {"target": "Scrum", "type": "parent_of"},
+        {"target": "Kanban", "type": "parent_of"},
+        {"target": "Sprint Planning", "type": "subfield_of"}
+      ]
+    },
+    {
+      "id": "sk_scrum",
+      "canonical_name": "Scrum",
+      "category": "Project Management",
+      "description": "Framework within which people can address complex adaptive problems while delivering products of high value.",
+      "aliases": ["Scrum Framework", "Scrum Master", "Daily Standup", "Sprint Review"],
+      "relationships": [
+        {"target": "Agile Methodologies", "type": "subfield_of"},
+        {"target": "Kanban", "type": "related_not_equivalent"},
+        {"target": "JIRA", "type": "tool_of"}
+      ]
+    },
+    {
+      "id": "sk_jira",
+      "canonical_name": "JIRA",
+      "category": "Project Management",
+      "description": "Proprietary issue tracking product developed by Atlassian that allows bug tracking and agile project management.",
+      "aliases": ["Jira Software", "Atlassian Jira"],
+      "relationships": [
+        {"target": "Scrum", "type": "tool_of"},
+        {"target": "Agile Methodologies", "type": "tool_of"}
+      ]
+    },
+    {
+      "id": "sk_pmp",
+      "canonical_name": "PMP",
+      "category": "Project Management",
+      "description": "Project Management Professional credential certifying project leadership expertise.",
+      "aliases": ["Project Management Professional", "PMI PMP", "Project Management Certification"],
+      "relationships": [
+        {"target": "Risk Management", "type": "subfield_of"},
+        {"target": "Agile Methodologies", "type": "related"}
+      ]
+    },
+    {
+      "id": "sk_risk_mgmt",
+      "canonical_name": "Risk Management",
+      "category": "Project Management",
+      "description": "Identification, evaluation, and prioritization of risks followed by coordinated and economical application of resources.",
+      "aliases": ["Project Risk Assessment", "Risk Mitigation", "Risk Governance"],
+      "relationships": [
+        {"target": "PMP", "type": "related"}
+      ]
+    },
+    {
+      "id": "sk_talent_acq",
+      "canonical_name": "Talent Acquisition",
+      "category": "HR and Recruitment",
+      "description": "Process of finding, acquiring, assessing, and hiring candidates to fill roles.",
+      "aliases": ["Recruitment", "Technical Recruiting", "Headhunting", "Candidate Sourcing", "Talent Sourcing"],
+      "relationships": [
+        {"target": "Applicant Tracking System", "type": "tool_of"},
+        {"target": "Employee Onboarding", "type": "related"}
+      ]
+    },
+    {
+      "id": "sk_ats",
+      "canonical_name": "Applicant Tracking System",
+      "category": "HR and Recruitment",
+      "description": "Software application that enables the electronic handling of recruitment and hiring needs.",
+      "aliases": ["ATS", "Greenhouse", "Lever", "Workday ATS", "Workday Recruiting"],
+      "relationships": [
+        {"target": "Talent Acquisition", "type": "tool_of"}
+      ]
+    },
+    {
+      "id": "sk_employee_rel",
+      "canonical_name": "Employee Relations",
+      "category": "HR and Recruitment",
+      "description": "Efforts by an organization to manage relationships between employers and employees.",
+      "aliases": ["HR Employee Relations", "Staff Relations", "Workplace Relations"],
+      "relationships": [
+        {"target": "Human Resources Information System", "type": "related"}
+      ]
+    },
+    {
+      "id": "sk_hris",
+      "canonical_name": "Human Resources Information System",
+      "category": "HR and Recruitment",
+      "description": "Software solution for data entry, data tracking, and data information needs in human resources.",
+      "aliases": ["HRIS", "Workday", "BambooHR", "SAP SuccessFactors", "HRMS"],
+      "relationships": [
+        {"target": "Employee Relations", "type": "related"}
+      ]
+    },
+    {
+      "id": "sk_seo",
+      "canonical_name": "Search Engine Optimization",
+      "category": "Marketing",
+      "description": "Process of improving the quality and quantity of website traffic to a website from search engines.",
+      "aliases": ["SEO", "Organic Search", "Search Engine Marketing", "SEM", "Technical SEO"],
+      "relationships": [
+        {"target": "Google Analytics", "type": "tool_of"},
+        {"target": "Content Marketing", "type": "complementary"}
+      ]
+    },
+    {
+      "id": "sk_content_mkt",
+      "canonical_name": "Content Marketing",
+      "category": "Marketing",
+      "description": "Form of marketing focused on creating, publishing, and distributing content for a targeted audience online.",
+      "aliases": ["Content Strategy", "Copywriting", "Blog Writing", "Content Creation"],
+      "relationships": [
+        {"target": "Search Engine Optimization", "type": "complementary"},
+        {"target": "Social Media Marketing", "type": "complementary"}
+      ]
+    },
+    {
+      "id": "sk_google_ads",
+      "canonical_name": "Google Ads",
+      "category": "Marketing",
+      "description": "Online advertising platform developed by Google where advertisers bid to display brief advertisements.",
+      "aliases": ["Google AdWords", "PPC", "Pay-Per-Click", "Paid Search"],
+      "relationships": [
+        {"target": "Search Engine Optimization", "type": "related_not_equivalent"},
+        {"target": "Google Analytics", "type": "tool_of"}
+      ]
+    },
+    {
+      "id": "sk_crm",
+      "canonical_name": "Customer Relationship Management",
+      "category": "Sales",
+      "description": "Process in which a business administers its interactions with customers using data analysis.",
+      "aliases": ["CRM", "Salesforce CRM", "HubSpot CRM", "Zoho CRM"],
+      "relationships": [
+        {"target": "Salesforce", "type": "parent_of"},
+        {"target": "Lead Generation", "type": "related"}
+      ]
+    },
+    {
+      "id": "sk_salesforce",
+      "canonical_name": "Salesforce",
+      "category": "Sales",
+      "description": "Leading cloud-based customer relationship management (CRM) software provider.",
+      "aliases": ["SFDC", "Salesforce.com"],
+      "relationships": [
+        {"target": "Customer Relationship Management", "type": "subfield_of"},
+        {"target": "HubSpot", "type": "related_not_equivalent"}
+      ]
+    },
+    {
+      "id": "sk_lead_gen",
+      "canonical_name": "Lead Generation",
+      "category": "Sales",
+      "description": "Initiation of consumer interest or enquiry into products or services of a business.",
+      "aliases": ["Lead Gen", "Prospecting", "Outbound Sales", "Cold Calling", "B2B Lead Generation"],
+      "relationships": [
+        {"target": "B2B Sales", "type": "subfield_of"},
+        {"target": "Customer Relationship Management", "type": "tool_of"}
+      ]
+    },
+    {
+      "id": "sk_b2b_sales",
+      "canonical_name": "B2B Sales",
+      "category": "Sales",
+      "description": "Business-to-business sales model involving selling products or services to other businesses.",
+      "aliases": ["B2B Selling", "Enterprise Sales", "Corporate Sales", "Account Executive"],
+      "relationships": [
+        {"target": "Lead Generation", "type": "parent_of"},
+        {"target": "Customer Relationship Management", "type": "tool_of"}
+      ]
+    },
+    {
+      "id": "sk_fin_model",
+      "canonical_name": "Financial Modeling",
+      "category": "Finance and Accounting",
+      "description": "Task of building an abstract representation of a real world financial situation.",
+      "aliases": ["Financial Forecasting", "DCF Modeling", "Valuation Modeling", "Excel Financial Modeling"],
+      "relationships": [
+        {"target": "Financial Analysis", "type": "subfield_of"},
+        {"target": "QuickBooks", "type": "related"}
+      ]
+    },
+    {
+      "id": "sk_quickbooks",
+      "canonical_name": "QuickBooks",
+      "category": "Finance and Accounting",
+      "description": "Accounting software package geared towards small and medium-sized businesses.",
+      "aliases": ["QB", "QuickBooks Online", "QBO"],
+      "relationships": [
+        {"target": "GAAP", "type": "applied_to"},
+        {"target": "Financial Modeling", "type": "related"}
+      ]
+    },
+    {
+      "id": "sk_gaap",
+      "canonical_name": "GAAP",
+      "category": "Finance and Accounting",
+      "description": "Generally Accepted Accounting Principles, standard framework of guidelines for financial accounting.",
+      "aliases": ["Generally Accepted Accounting Principles", "US GAAP", "Accounting Standards"],
+      "relationships": [
+        {"target": "Auditing", "type": "related"},
+        {"target": "Financial Modeling", "type": "related"}
+      ]
+    },
+    {
+      "id": "sk_process_opt",
+      "canonical_name": "Process Optimization",
+      "category": "Business Operations",
+      "description": "Practice of adjusting a process so as to optimize some specified set of parameters without violating constraints.",
+      "aliases": ["Business Process Improvement", "BPI", "Operational Efficiency", "Workflow Optimization"],
+      "relationships": [
+        {"target": "Six Sigma", "type": "related"},
+        {"target": "Supply Chain Management", "type": "related"}
+      ]
+    },
+    {
+      "id": "sk_six_sigma",
+      "canonical_name": "Six Sigma",
+      "category": "Business Operations",
+      "description": "Disciplined, data-driven approach and methodology for eliminating defects in any process.",
+      "aliases": ["Lean Six Sigma", "Lean Manufacturing", "DMAIC", "Black Belt Six Sigma"],
+      "relationships": [
+        {"target": "Process Optimization", "type": "subfield_of"}
+      ]
+    },
+    {
+      "id": "sk_supply_chain",
+      "canonical_name": "Supply Chain Management",
+      "category": "Business Operations",
+      "description": "Management of the flow of goods, data, and finances related to a product or service.",
+      "aliases": ["SCM", "Logistics Management", "Procurement", "Inventory Management"],
+      "relationships": [
+        {"target": "Process Optimization", "type": "related"}
+      ]
+    }
+  ]
+}

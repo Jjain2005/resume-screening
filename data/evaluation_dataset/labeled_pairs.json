@@ -1,0 +1,162 @@
+[
+  {
+    "id": "pair_01",
+    "category": "Artificial Intelligence and Machine Learning",
+    "requirement": "Experience in Natural Language Processing and text classification",
+    "evidence": "Engineered multi-class NLP models to categorize customer sentiment using BERT and transformers.",
+    "is_match": true,
+    "rationale": "Strong semantic and domain equivalence: NLP and sentiment classification matches requirement."
+  },
+  {
+    "id": "pair_02",
+    "category": "Artificial Intelligence and Machine Learning",
+    "requirement": "Proficiency in deep learning frameworks like PyTorch or TensorFlow",
+    "evidence": "Trained convolutional neural networks using PyTorch on AWS GPU clusters.",
+    "is_match": true,
+    "rationale": "Direct mention of PyTorch applied to neural networks."
+  },
+  {
+    "id": "pair_03",
+    "category": "Artificial Intelligence and Machine Learning",
+    "requirement": "Experience building predictive machine learning models in production",
+    "evidence": "Developed and deployed a customer churn prediction pipeline using scikit-learn that reduced churn by 12%.",
+    "is_match": true,
+    "rationale": "Concrete predictive modeling in production matching requirement."
+  },
+  {
+    "id": "pair_04",
+    "category": "Artificial Intelligence and Machine Learning",
+    "requirement": "Deep expertise in Computer Vision algorithms and object detection",
+    "evidence": "Handled social media marketing campaigns and managed Facebook ad spend.",
+    "is_match": false,
+    "rationale": "Completely unrelated marketing experience."
+  },
+  {
+    "id": "pair_05",
+    "category": "IT and Software Development",
+    "requirement": "Strong experience developing microservices with FastAPI or Flask in Python",
+    "evidence": "Architected low-latency REST APIs using FastAPI with Pydantic validation serving 5,000 QPS.",
+    "is_match": true,
+    "rationale": "Direct match on FastAPI microservices in Python."
+  },
+  {
+    "id": "pair_06",
+    "category": "IT and Software Development",
+    "requirement": "Hands-on experience with containerization and orchestration using Docker and Kubernetes",
+    "evidence": "Packaged backend services into Docker containers and managed cluster workloads with Kubernetes Helm charts.",
+    "is_match": true,
+    "rationale": "Direct match on Docker and Kubernetes orchestration."
+  },
+  {
+    "id": "pair_07",
+    "category": "IT and Software Development",
+    "requirement": "Relational database schema design and complex SQL query optimization using PostgreSQL",
+    "evidence": "Designed 3NF database schemas and optimized indexing in PostgreSQL to improve query times by 40%.",
+    "is_match": true,
+    "rationale": "Direct match on PostgreSQL schema design and query optimization."
+  },
+  {
+    "id": "pair_08",
+    "category": "IT and Software Development",
+    "requirement": "Experience building frontend applications using React and TypeScript",
+    "evidence": "Built enterprise web dashboards using Angular 14 and RxJS state management.",
+    "is_match": false,
+    "rationale": "Angular is related but NOT equivalent to React; strict requirement asks for React."
+  },
+  {
+    "id": "pair_09",
+    "category": "IT and Software Development",
+    "requirement": "Knowledge of continuous integration and continuous deployment pipelines (CI/CD)",
+    "evidence": "Configured automated GitHub Actions workflows for testing, linting, and staging deployments.",
+    "is_match": true,
+    "rationale": "GitHub Actions workflows for testing/deployment are direct implementation of CI/CD."
+  },
+  {
+    "id": "pair_10",
+    "category": "Project Management",
+    "requirement": "Proven track record running Agile Scrum ceremonies and sprint planning",
+    "evidence": "Facilitated bi-weekly sprint planning, daily standups, and retrospectives as Scrum Master for 12 engineers.",
+    "is_match": true,
+    "rationale": "Direct match on Agile Scrum ceremonies and sprint planning."
+  },
+  {
+    "id": "pair_11",
+    "category": "Project Management",
+    "requirement": "Experience with project management software like JIRA for tracking roadmaps",
+    "evidence": "Tracked team velocity and managed backlog epics and bug triage workflows in Jira.",
+    "is_match": true,
+    "rationale": "Direct match on Jira issue and backlog management."
+  },
+  {
+    "id": "pair_12",
+    "category": "Marketing",
+    "requirement": "Search Engine Optimization (SEO) and technical website audit experience",
+    "evidence": "Implemented technical SEO improvements and structured data, raising organic search visibility by 35%.",
+    "is_match": true,
+    "rationale": "Direct match on technical SEO and organic traffic improvement."
+  },
+  {
+    "id": "pair_13",
+    "category": "Marketing",
+    "requirement": "PPC campaign management using Google Ads and search advertising",
+    "evidence": "Managed a $50k monthly budget for Google Ads campaigns with focus on keyword bidding and conversion rate.",
+    "is_match": true,
+    "rationale": "Direct match on Google Ads PPC management."
+  },
+  {
+    "id": "pair_14",
+    "category": "Finance and Accounting",
+    "requirement": "Financial modeling and discounted cash flow (DCF) valuation experience",
+    "evidence": "Constructed 5-year DCF models and revenue forecast models to evaluate prospective acquisitions.",
+    "is_match": true,
+    "rationale": "Direct match on DCF valuation and financial modeling."
+  },
+  {
+    "id": "pair_15",
+    "category": "Finance and Accounting",
+    "requirement": "Experience using QuickBooks for general ledger maintenance and reconciliation",
+    "evidence": "Configured Docker containers and orchestrated Kubernetes clusters.",
+    "is_match": false,
+    "rationale": "Unrelated technical experience having zero finance or QuickBooks overlap."
+  },
+  {
+    "id": "pair_16",
+    "category": "HR and Recruitment",
+    "requirement": "Full lifecycle talent acquisition and technical recruiting",
+    "evidence": "Sourced, screened, and closed 40+ engineering candidates annually utilizing LinkedIn Recruiter and ATS.",
+    "is_match": true,
+    "rationale": "Direct match on technical talent acquisition."
+  },
+  {
+    "id": "pair_17",
+    "category": "Sales",
+    "requirement": "B2B enterprise sales and CRM pipeline management using Salesforce",
+    "evidence": "Managed pipeline of 50+ enterprise accounts in Salesforce and achieved 115% of annual sales quota.",
+    "is_match": true,
+    "rationale": "Direct match on B2B enterprise sales and Salesforce CRM management."
+  },
+  {
+    "id": "pair_18",
+    "category": "Business Operations",
+    "requirement": "Process optimization and Lean Six Sigma methodology application",
+    "evidence": "Led DMAIC Lean Six Sigma project that eliminated manufacturing bottlenecks and saved $120,000 annually.",
+    "is_match": true,
+    "rationale": "Direct match on Lean Six Sigma process optimization."
+  },
+  {
+    "id": "pair_19",
+    "category": "IT and Software Development",
+    "requirement": "Expertise in building scalable REST APIs with Node.js and Express",
+    "evidence": "Experienced in designing logos, graphics, and brochures using Adobe Photoshop and Illustrator.",
+    "is_match": false,
+    "rationale": "Graphic design is completely unrelated to backend Node.js development."
+  },
+  {
+    "id": "pair_20",
+    "category": "HR and Recruitment",
+    "requirement": "Experience managing employee onboarding and HRIS systems like Workday",
+    "evidence": "Administered employee records, benefits, and onboarding workflows in Workday HRIS.",
+    "is_match": true,
+    "rationale": "Direct match on employee onboarding and Workday HRIS."
+  }
+]
