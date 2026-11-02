@@ -380,27 +380,52 @@ class HybridMatchingEngine:
                     )
 
             strength = ContextualMatcher.evaluate_evidence_strength(sem_sentence)
-            return RequirementMatchResult(
-                requirement_id=req.id,
-                requirement_text=req.text,
-                priority=req.priority.value,
-                classification=MatchClassification.STRONG_SEMANTIC_MATCH,
-                matched_term=sem_sentence.text[:40] + "...",
-                canonical_skill=target_skill,
-                evidence_sentence=sem_sentence.text,
-                resume_section=sem_sentence.section,
-                similarity_score=round(sem_score, 3),
-                evidence_strength=strength,
-                matching_method="Semantic Matching",
-                explanation=f"Strong semantic correspondence ({sem_score:.2f} cosine similarity) found in {sem_sentence.section.value}.",
-                confidence=min(0.92, round(sem_score * 0.95, 2)),
-                weight=req.weight,
-                req_type=req.req_type.value,
-                matching_logic=req.matching_logic.value,
-                is_eligibility_condition=req.is_eligibility_condition,
-                fulfillment_ratio=1.0,
-                evidence_passages=evidence_passages
-            )
+            has_concrete_competency = self._has_concrete_evidence_of_competency(req, sem_sentence, target_skill)
+
+            if has_concrete_competency:
+                return RequirementMatchResult(
+                    requirement_id=req.id,
+                    requirement_text=req.text,
+                    priority=req.priority.value,
+                    classification=MatchClassification.STRONG_SEMANTIC_MATCH,
+                    matched_term=sem_sentence.text[:40] + "...",
+                    canonical_skill=target_skill,
+                    evidence_sentence=sem_sentence.text,
+                    resume_section=sem_sentence.section,
+                    similarity_score=round(sem_score, 3),
+                    evidence_strength=strength,
+                    matching_method="Semantic Matching",
+                    explanation=f"Strong semantic correspondence ({sem_score:.2f} cosine similarity) with demonstrated competency in {sem_sentence.section.value}.",
+                    confidence=min(0.92, round(sem_score * 0.95, 2)),
+                    weight=req.weight,
+                    req_type=req.req_type.value,
+                    matching_logic=req.matching_logic.value,
+                    is_eligibility_condition=req.is_eligibility_condition,
+                    fulfillment_ratio=1.0,
+                    evidence_passages=evidence_passages
+                )
+            else:
+                return RequirementMatchResult(
+                    requirement_id=req.id,
+                    requirement_text=req.text,
+                    priority=req.priority.value,
+                    classification=MatchClassification.NEEDS_MANUAL_REVIEW,
+                    matched_term=sem_sentence.text[:40] + "...",
+                    canonical_skill=target_skill,
+                    evidence_sentence=sem_sentence.text,
+                    resume_section=sem_sentence.section,
+                    similarity_score=round(sem_score, 3),
+                    evidence_strength=strength,
+                    matching_method="Semantic (Uncertain Evidence)",
+                    explanation=f"Semantic similarity found potential evidence ({sem_score:.2f} similarity in {sem_sentence.section.value}), but explicit competency verification is uncertain.",
+                    confidence=0.60,
+                    weight=req.weight,
+                    req_type=req.req_type.value,
+                    matching_logic=req.matching_logic.value,
+                    is_eligibility_condition=req.is_eligibility_condition,
+                    fulfillment_ratio=0.5,
+                    evidence_passages=evidence_passages
+                )
 
         # -------------------------------------------------------------
         # Stage 4: Check for Known Related Skills (Not Equivalent)
@@ -668,4 +693,52 @@ class HybridMatchingEngine:
                 evidence_passages=evidence_passages
             )
         return None
+
+    def _has_concrete_evidence_of_competency(
+        self,
+        req: RequirementItem,
+        sentence: EvidenceSentence,
+        target_skill: Optional[str]
+    ) -> bool:
+        """
+        Validates whether an evidence sentence actually proves competency
+        rather than just sharing generic semantic similarity.
+        """
+        sent_text_low = sentence.text.lower()
+
+        # 1. Check for exact or alias appearance of target skill
+        if target_skill:
+            canon = self.taxonomy.resolve_canonical(target_skill) or target_skill
+            entry = self.taxonomy.get_skill(canon)
+            terms = [canon.lower()]
+            if entry:
+                terms.extend(a.lower() for a in entry.aliases)
+            for t in terms:
+                if re.search(rf'\b{re.escape(t)}\b', sent_text_low):
+                    return True
+
+        # 2. Check for accepted equivalents
+        if req.accepted_equivalents:
+            for eq in req.accepted_equivalents:
+                if re.search(rf'\b{re.escape(eq.lower())}\b', sent_text_low):
+                    return True
+
+        # 3. For experience/responsibility requirements: verify concrete action verbs and context
+        ACTION_VERBS = [
+            "built", "designed", "implemented", "deployed", "configured", "architected",
+            "managed", "maintained", "led", "optimized", "trained", "developed",
+            "created", "automated", "orchestrated", "engineered", "scaled"
+        ]
+        has_action = any(re.search(rf'\b{v}\b', sent_text_low) for v in ACTION_VERBS)
+        in_experience_or_project = sentence.section in (SectionType.EXPERIENCE, SectionType.PROJECTS)
+
+        if has_action and in_experience_or_project:
+            # Check for substantial technical or implementation content
+            words = [w for w in re.findall(r'\b[a-z0-9+#.]+\b', sent_text_low) if len(w) >= 3]
+            req_words = [w for w in re.findall(r'\b[a-z0-9+#.]+\b', req.text.lower()) if len(w) >= 3]
+            overlap = set(words) & set(req_words)
+            if len(overlap) >= 1 or len(words) >= 8:
+                return True
+
+        return False
 

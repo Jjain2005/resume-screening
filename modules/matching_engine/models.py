@@ -20,11 +20,19 @@ class EvidenceStrength(str, Enum):
     EXPERIENCE_EVIDENCE = "Experience Evidence" # In Work History
     STRONG_IMPLEMENTATION = "Strong Implementation" # Experience/Projects with metrics & details
 
+class SkillEvidenceStatus(str, Enum):
+    DEMONSTRATED = "Demonstrated"
+    PARTIAL = "Partial"
+    LISTED_ONLY = "Listed Only"
+    TRANSFERABLE = "Transferable"
+    NOT_FOUND = "Not Found"
+    UNCERTAIN = "Uncertain"
+
 @dataclass
 class RequirementMatchResult:
     requirement_id: str
     requirement_text: str
-    priority: str                       # Mandatory / Preferred / Optional
+    priority: str                       # Mandatory / Core / Preferred / Optional
     classification: MatchClassification
     matched_term: Optional[str] = None
     canonical_skill: Optional[str] = None
@@ -42,13 +50,37 @@ class RequirementMatchResult:
     fulfillment_ratio: float = 0.0      # 0.0 to 1.0
     evidence_passages: List[Dict[str, Any]] = field(default_factory=list)
     component_matches: Dict[str, Any] = field(default_factory=dict)
+    evidence_status: Optional[SkillEvidenceStatus] = None
+
+    def __post_init__(self):
+        if self.evidence_status is None:
+            self.evidence_status = self.derive_evidence_status()
+
+    def derive_evidence_status(self) -> SkillEvidenceStatus:
+        if self.classification == MatchClassification.NOT_FOUND:
+            return SkillEvidenceStatus.NOT_FOUND
+        elif self.classification == MatchClassification.RELATED_SKILL_NOT_EQUIVALENT:
+            return SkillEvidenceStatus.TRANSFERABLE
+        elif self.classification == MatchClassification.NEEDS_MANUAL_REVIEW:
+            return SkillEvidenceStatus.UNCERTAIN
+        elif self.classification == MatchClassification.PARTIAL_EVIDENCE:
+            return SkillEvidenceStatus.PARTIAL
+        elif self.classification in (MatchClassification.EXACT_MATCH, MatchClassification.STRONG_SEMANTIC_MATCH, MatchClassification.FUZZY_MATCH):
+            if self.evidence_strength in (EvidenceStrength.STRONG_IMPLEMENTATION, EvidenceStrength.EXPERIENCE_EVIDENCE, EvidenceStrength.PROJECT_EVIDENCE):
+                return SkillEvidenceStatus.DEMONSTRATED
+            elif self.evidence_strength in (EvidenceStrength.LISTED_ONLY, EvidenceStrength.MENTIONED):
+                return SkillEvidenceStatus.LISTED_ONLY
+            return SkillEvidenceStatus.DEMONSTRATED
+        return SkillEvidenceStatus.NOT_FOUND
 
     def to_dict(self) -> dict:
+        status_val = self.evidence_status.value if self.evidence_status else self.derive_evidence_status().value
         return {
             "requirement_id": self.requirement_id,
             "requirement_text": self.requirement_text,
             "priority": self.priority,
             "classification": self.classification.value,
+            "evidence_status": status_val,
             "matched_term": self.matched_term,
             "canonical_skill": self.canonical_skill,
             "evidence_sentence": self.evidence_sentence,

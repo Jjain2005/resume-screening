@@ -19,11 +19,15 @@ class RequirementPriority(str, Enum):
 
     @property
     def is_mandatory(self) -> bool:
-        return self in (RequirementPriority.MANDATORY, RequirementPriority.REQUIRED, RequirementPriority.CORE)
+        return self in (RequirementPriority.MANDATORY, RequirementPriority.REQUIRED)
 
     @property
     def is_core(self) -> bool:
         return self == RequirementPriority.CORE
+
+    @property
+    def is_essential(self) -> bool:
+        return self in (RequirementPriority.MANDATORY, RequirementPriority.REQUIRED, RequirementPriority.CORE)
 
     @classmethod
     def from_str(cls, val: str) -> "RequirementPriority":
@@ -174,7 +178,9 @@ class JobDescription:
         # assign dynamic relative weights based on priority
         if total_explicit <= 0 or all(r.weight == 1.0 for r in self.requirements):
             for r in self.requirements:
-                if r.priority in (RequirementPriority.MANDATORY, RequirementPriority.REQUIRED):
+                if r.req_type == RequirementType.RESPONSIBILITY:
+                    r.weight = 0.5
+                elif r.priority in (RequirementPriority.MANDATORY, RequirementPriority.REQUIRED):
                     r.weight = 3.0
                 elif r.priority == RequirementPriority.CORE:
                     r.weight = 2.5

@@ -42,6 +42,7 @@ class ProcessedResume:
     is_low_confidence: bool = False
     confidence_reasons: List[str] = field(default_factory=list)
     verified_experience_years: float = 0.0
+    relevant_experience_years: float = 0.0
     employment_periods: List[Dict] = field(default_factory=list)
     timeline_summary: str = ""
     sections: Dict[SectionType, ResumeSection] = field(default_factory=dict)

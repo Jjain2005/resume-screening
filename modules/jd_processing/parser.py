@@ -91,18 +91,21 @@ class JobDescriptionParser:
             "- 'expected_practical_knowledge': Concrete implementations expected (e.g., CI/CD pipelines, API design)\n"
             "- 'desirable_qualifications': Nice-to-have skills or experiences\n"
             "- 'requirements': List of specific requirements with:\n"
-            "   - 'text': Exact requirement statement\n"
-            "   - 'priority': 'Mandatory' (strict eligibility prerequisite or explicit hard requirement) | 'Core' (primary essential job competency, day-to-day technical skill) | 'Preferred' (nice-to-have supplementary skill) | 'Optional' (minor bonus)\n"
+            "   - 'text': Exact atomic requirement statement (break compound multi-skill bullets into atomic items while preserving AND/OR compound logic)\n"
+            "   - 'priority': 'Mandatory' (strict eligibility prerequisites: e.g. required degree, work authorization, hard minimum years) | 'Core' (primary essential job competencies, day-to-day technical skills) | 'Preferred' (nice-to-have supplementary skills) | 'Optional' (minor bonus)\n"
             "   - 'req_type': 'Skill' | 'Experience' | 'Education' | 'Certification' | 'Responsibility'\n"
             "   - 'matching_logic': 'Single' | 'ALL_OF' | 'ANY_OF'\n"
-            "   - 'compound_components': List of components if ALL_OF or ANY_OF\n"
+            "   - 'compound_components': List of components if ALL_OF (AND) or ANY_OF (OR)\n"
             "   - 'accepted_equivalents': List of interchangeable technologies\n"
             "   - 'min_years': Number or null\n"
-            "   - 'relative_weight': Float (e.g. Mandatory 3.0, Core 2.5, Preferred 1.5, Optional 0.5)\n\n"
+            "   - 'relative_weight': Float (e.g. Mandatory 3.0, Core 2.5, Preferred 1.2, Optional 0.5)\n\n"
             "CRITICAL RULES:\n"
-            "1. DO NOT ASSUME requirements not in the text. If experience, degree, projects, or certifications are not mentioned, DO NOT invent them.\n"
-            "2. Distinguish genuinely non-negotiable requirements (Mandatory) from core technical skills (Core) and nice-to-haves (Preferred).\n"
-            "3. Return strictly valid JSON."
+            "1. Extract ATOMIC requirements: do not lump distinct tools/skills together unless connected by explicit AND/OR.\n"
+            "2. Do NOT confuse responsibilities ('Responsible for...', 'Lead the team...') with mandatory skills. Responsibilities must have req_type 'Responsibility' and priority 'Core' or 'Preferred', NEVER 'Mandatory'.\n"
+            "3. Preserve AND/OR relationships: Use matching_logic 'ALL_OF' for AND, 'ANY_OF' for OR, and list component skills in 'compound_components'.\n"
+            "4. Classify Priority strictly into ONE of: Mandatory, Core, Preferred, Optional.\n"
+            "5. DO NOT ASSUME requirements not in the text. If experience, degree, projects, or certifications are not mentioned, DO NOT invent them.\n"
+            "6. Return strictly valid JSON."
         )
 
         user_prompt = f"Analyze this Job Description:\n\n{text}"
@@ -168,6 +171,12 @@ class JobDescriptionParser:
 
             # Initial relative weight
             rel_weight = float(item_data.get("relative_weight", item_data.get("weight", 3.0 if priority.is_mandatory else 1.5)))
+
+            # Responsibilities must not be confused with mandatory skills
+            if req_type == RequirementType.RESPONSIBILITY:
+                if priority.is_mandatory:
+                    priority = RequirementPriority.CORE
+                rel_weight = min(rel_weight, 1.0)
 
             # Detect behavioural requirements and treat them as optional/low-weight
             # even if they appear under a "Mandatory" JD heading.
@@ -338,9 +347,9 @@ class JobDescriptionParser:
 
             for sentence_text in sub_sentences:
                 req_type = self._detect_requirement_type(sentence_text)
-                if current_section_type == "responsibilities":
+                if current_section_type == "responsibilities" or req_type == RequirementType.RESPONSIBILITY:
                     req_type = RequirementType.RESPONSIBILITY
-                    item_priority = RequirementPriority.PREFERRED
+                    item_priority = RequirementPriority.CORE if current_priority.is_mandatory else current_priority
                     weight = 0.5
                 elif req_type == RequirementType.BEHAVIOURAL:
                     # Behavioural qualities: real but unverifiable from resume text alone.
@@ -352,8 +361,10 @@ class JobDescriptionParser:
                     item_priority = current_priority
                     if item_priority.is_mandatory:
                         weight = 3.0
+                    elif item_priority == RequirementPriority.CORE:
+                        weight = 2.5
                     elif item_priority == RequirementPriority.PREFERRED:
-                        weight = 1.5
+                        weight = 1.2
                     else:
                         weight = 0.5
 

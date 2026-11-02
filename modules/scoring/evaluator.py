@@ -94,8 +94,8 @@ class CandidateEvaluator:
         is_low_conf = getattr(resume, "is_low_confidence", False) if resume else False
 
         # ── Extraction / API system failure ─────────────────────────────────
-        # Kept strictly separate from candidate decisions.
-        if is_low_conf or not match_results:
+        # Kept strictly separate as UNABLE_TO_EVALUATE. Never reject due to system failure.
+        if is_low_conf:
             return CandidateEvaluation(
                 overall_score=0.0,
                 essential_coverage_pct=0.0,
@@ -110,7 +110,7 @@ class CandidateEvaluator:
                 matched_essential_count=0,
                 total_preferred_count=0,
                 matched_preferred_count=0,
-                is_low_confidence_extraction=is_low_conf,
+                is_low_confidence_extraction=True,
                 is_system_failure=True,
                 total_mandatory_count=0,
                 matched_mandatory_count=0,
@@ -118,13 +118,39 @@ class CandidateEvaluator:
                 matched_core_count=0,
                 demonstrated_essential_count=0,
                 listed_only_essential_count=0,
-                score_breakdown_formula="Evaluation incomplete.",
-                decision_rationale=(
-                    "[System] Resume extraction confidence too low to score reliably. "
-                    "Re-upload a readable PDF or run OCR before rescreening."
-                    if is_low_conf else
-                    "[System] No JD requirements were matched — cannot produce a decision."
-                ),
+                score_breakdown_formula="Evaluation incomplete due to low extraction confidence.",
+                decision_rationale="Low extraction confidence detected. Manual review required before decision.",
+                llm_score=llm_score,
+                llm_recommendation=llm_recommendation,
+                llm_synthesis=llm_synthesis,
+                dynamic_criteria_scores={}
+            )
+
+        if not match_results:
+            return CandidateEvaluation(
+                overall_score=0.0,
+                essential_coverage_pct=0.0,
+                preferred_coverage_pct=0.0,
+                practical_evidence_score=0.0,
+                experience_duration_score=0.0,
+                project_depth_score=0.0,
+                unsupported_keyword_penalty=0.0,
+                verified_tenure_years=getattr(resume, "verified_experience_years", 0.0) if resume else 0.0,
+                recommendation=Recommendation.NOT_RECOMMENDED,
+                total_essential_count=0,
+                matched_essential_count=0,
+                total_preferred_count=0,
+                matched_preferred_count=0,
+                is_low_confidence_extraction=False,
+                is_system_failure=False,
+                total_mandatory_count=0,
+                matched_mandatory_count=0,
+                total_core_count=0,
+                matched_core_count=0,
+                demonstrated_essential_count=0,
+                listed_only_essential_count=0,
+                score_breakdown_formula="No requirements evaluated.",
+                decision_rationale="Not Recommended: No requirements matched in the candidate profile.",
                 llm_score=llm_score,
                 llm_recommendation=llm_recommendation,
                 llm_synthesis=llm_synthesis,
@@ -222,16 +248,36 @@ class CandidateEvaluator:
 
         # ── 4. PRACTICAL EVIDENCE QUALITY ────────────────────────────────────
         # Weighted average of evidence quality over ALL confirmed requirements,
-        # grounded by what fraction of hard essentials were actually demonstrated.
+        # deduplicating repeated sentences to prevent double-counting the same evidence.
         confirmed_all   = [r for r in match_results if r.classification in CONFIRMED_CLASSIFICATIONS]
         demonstrated_all = [r for r in confirmed_all if r.evidence_strength in DEMONSTRATED_EVIDENCE]
         listed_only_all  = [r for r in confirmed_all if r.evidence_strength not in DEMONSTRATED_EVIDENCE
                             and r.evidence_strength != EvidenceStrength.NONE]
 
-        if demonstrated_all or listed_only_all:
-            demo_sum   = sum(EVIDENCE_QUALITY_WEIGHTS.get(r.evidence_strength, 0.0) for r in demonstrated_all)
-            listed_sum = sum(EVIDENCE_QUALITY_WEIGHTS.get(r.evidence_strength, 0.0) * 0.4 for r in listed_only_all)
-            avg_ev     = (demo_sum + listed_sum) / max(1, len(demonstrated_all) + len(listed_only_all))
+        unique_demo_sentences = set()
+        deduped_demonstrated = []
+        for r in demonstrated_all:
+            s_text = (r.evidence_sentence or "").strip()
+            if s_text and s_text not in unique_demo_sentences:
+                unique_demo_sentences.add(s_text)
+                deduped_demonstrated.append(r)
+            elif not s_text:
+                deduped_demonstrated.append(r)
+
+        unique_listed_sentences = set()
+        deduped_listed = []
+        for r in listed_only_all:
+            s_text = (r.evidence_sentence or "").strip()
+            if s_text and s_text not in unique_listed_sentences:
+                unique_listed_sentences.add(s_text)
+                deduped_listed.append(r)
+            elif not s_text:
+                deduped_listed.append(r)
+
+        if deduped_demonstrated or deduped_listed:
+            demo_sum   = sum(EVIDENCE_QUALITY_WEIGHTS.get(r.evidence_strength, 0.0) for r in deduped_demonstrated)
+            listed_sum = sum(EVIDENCE_QUALITY_WEIGHTS.get(r.evidence_strength, 0.0) * 0.4 for r in deduped_listed)
+            avg_ev     = (demo_sum + listed_sum) / max(1, len(deduped_demonstrated) + len(deduped_listed))
             if total_hard_essential > 0:
                 ground = len([r for r in demonstrated_essential
                                if r.req_type not in BEHAVIOURAL_REQ_TYPES]) / total_hard_essential
@@ -243,7 +289,7 @@ class CandidateEvaluator:
 
         # ── 5. PROJECT RELEVANCE SCORE ───────────────────────────────────────
         # Only project/experience evidence that maps to a hard essential JD requirement
-        # gets credit. Unrelated projects do not contribute.
+        # gets credit. Unrelated projects do not contribute. Deduplicate shared sentences.
         relevant_hands_on = [
             r for r in confirmed_all
             if r.classification in CONFIRMED_CLASSIFICATIONS
@@ -254,10 +300,20 @@ class CandidateEvaluator:
                  or r.evidence_strength in (EvidenceStrength.PROJECT_EVIDENCE,
                                             EvidenceStrength.STRONG_IMPLEMENTATION))
         ]
-        if relevant_hands_on:
-            depth_scores = [EVIDENCE_QUALITY_WEIGHTS.get(r.evidence_strength, 0.7) for r in relevant_hands_on]
+        unique_proj_sentences = set()
+        deduped_hands_on = []
+        for r in relevant_hands_on:
+            s_text = (r.evidence_sentence or "").strip()
+            if s_text and s_text not in unique_proj_sentences:
+                unique_proj_sentences.add(s_text)
+                deduped_hands_on.append(r)
+            elif not s_text:
+                deduped_hands_on.append(r)
+
+        if deduped_hands_on:
+            depth_scores = [EVIDENCE_QUALITY_WEIGHTS.get(r.evidence_strength, 0.7) for r in deduped_hands_on]
             avg_depth    = sum(depth_scores) / len(depth_scores)
-            relevance    = min(1.0, len(relevant_hands_on) / max(1, min(total_hard_essential, 4)))
+            relevance    = min(1.0, len(deduped_hands_on) / max(1, min(total_hard_essential, 4)))
             project_score = min(100.0, ((avg_depth * 0.40) + (relevance * 0.60)) * 100.0)
         else:
             project_score = 0.0
@@ -279,38 +335,49 @@ class CandidateEvaluator:
             exp_duration_score = 100.0
             tenure_satisfied   = True
 
+        # Unsupported keyword penalty: candidate lists keywords without practical demonstration
+        if confirmed_essential and len(demonstrated_essential) == 0:
+            unsupported_keyword_penalty = 5.0
+        elif confirmed_essential and len(listed_only_essential) > len(demonstrated_essential) * 2:
+            unsupported_keyword_penalty = 2.0
+        else:
+            unsupported_keyword_penalty = 0.0
+
         # ── 7. COMPOSITE SCORE ───────────────────────────────────────────────
         # Dynamic weights from JD parser take priority.
-        # Falls back to uniform formula if weights are absent.
-        has_dynamic_weights = any(r.weight > 0 for r in match_results)
+        # Pure Python deterministic formula: Groq interprets evidence, Python calculates scores.
+        # Responsibilities provide context but must not independently increase competency scores.
+        competency_reqs = [r for r in match_results if r.req_type not in BEHAVIOURAL_REQ_TYPES]
+        if not competency_reqs:
+            competency_reqs = match_results
+
+        has_dynamic_weights = any(r.weight > 0 for r in competency_reqs)
         dynamic_criteria_scores: Dict[str, float] = {}
 
         if has_dynamic_weights:
-            total_dyn_w = sum(r.weight for r in match_results) or 1.0
+            total_dyn_w = sum(r.weight for r in competency_reqs) or 1.0
             dyn_sum     = 0.0
             for r in match_results:
                 is_ess    = r.priority.lower() in ESSENTIAL_PRIO
-                w_norm    = r.weight / total_dyn_w
                 item_s    = _score(r, is_ess) * 100.0
-                dyn_sum  += item_s * w_norm
                 dynamic_criteria_scores[r.requirement_id] = round(item_s, 1)
+                # Only competency requirements contribute to competency score
+                if r.req_type not in BEHAVIOURAL_REQ_TYPES:
+                    w_norm    = r.weight / total_dyn_w
+                    dyn_sum  += item_s * w_norm
             base_overall = (dyn_sum * 0.60) + (practical_score * 0.25) + (project_score * 0.15)
         else:
             w_exp = 0.15 if jd_requires_experience else 0.0
             w_ess = 0.45 + (0.0 if jd_requires_experience else 0.15)
             base_overall = (
-                (all_essential_pct * w_ess)
+                (hard_essential_pct * w_ess)
                 + (preferred_pct   * 0.15)
                 + (practical_score * 0.25)
                 + (exp_duration_score * w_exp)
                 + (project_score   * 0.15)
             )
 
-        if llm_score is not None and getattr(self.weights, "llm_evaluation_weight", 0.0) > 0:
-            w_llm   = min(0.30, self.weights.llm_evaluation_weight)
-            overall = (base_overall * (1.0 - w_llm)) + (llm_score * w_llm)
-        else:
-            overall = base_overall
+        overall = max(0.0, base_overall - unsupported_keyword_penalty)
 
         # ── 8. SCORE CEILING ─────────────────────────────────────────────────
         # Prevent unrelated/transferable skills from inflating the score past what
@@ -336,16 +403,16 @@ class CandidateEvaluator:
         overall = min(100.0, max(0.0, overall))
 
         # ── 9. RECOMMENDATION ────────────────────────────────────────────────
-        # Three outcomes for candidates (system failures already returned above):
-        #   RECOMMENDED_FOR_SELECTION  — strong, evidenced match
-        #   FURTHER_REVIEW             — borderline; needs secondary screening
-        #   NOT_RECOMMENDED            — clear mismatch on critical requirements
-        #
-        # Rules:
-        #   • Transferable skills do NOT compensate for missing core requirements.
-        #   • Rejection gates apply only to hard essential requirements + clean extraction.
-        #   • Behavioural / soft misses never trigger rejection.
-        #   • FURTHER_REVIEW is an automated outcome, not a human-review referral.
+        # Candidate outcomes:
+        #   RECOMMENDED            — strong, evidenced match
+        #   MANUAL_REVIEW_REQUIRED — borderline; unresolved ambiguity could materially change decision
+        #   NOT_RECOMMENDED        — clear mismatch or failure on critical requirements
+        # Transferable skills alone must not trigger Manual Review Required.
+        ambiguity_could_change_decision = (
+            n_uncertain > 0
+            and (matched_essential_count + n_uncertain) >= max(1, total_hard_essential * 0.5)
+            and n_missing <= (total_hard_essential / 2)
+        )
 
         if failed_eligibility:
             elig_names = [r.requirement_text for r in failed_eligibility[:2]]
@@ -355,21 +422,6 @@ class CandidateEvaluator:
                 f"({', '.join(elig_names)})."
             )
 
-        elif total_hard_essential > 0 and (
-            # Missing more than half the hard essential requirements — clear mismatch
-            n_missing > (total_hard_essential / 2)
-            # Nothing confirmed and nothing uncertain (transferable alone is NOT enough)
-            or (matched_essential_count == 0 and n_uncertain == 0)
-            # Score below floor — transferable skills present but don't close gap
-            or (overall < 40.0)
-        ):
-            rec = Recommendation.NOT_RECOMMENDED
-            miss_names = [r.requirement_text for r in missing_critical[:3]]
-            decision_caveat = (
-                f"Not Recommended: Insufficient match on critical competencies "
-                f"(score {overall:.0f}/100; missing: {', '.join(miss_names) if miss_names else f'{n_missing} core requirements'})."
-            )
-
         elif (
             hard_essential_pct >= 70.0
             and overall >= 68.0
@@ -377,7 +429,7 @@ class CandidateEvaluator:
             and n_missing == 0
             and len(demonstrated_essential) >= max(1, total_hard_essential // 2)
         ):
-            rec = Recommendation.RECOMMENDED_FOR_SELECTION
+            rec = Recommendation.RECOMMENDED
             tenure_note = f", {verified_tenure:.1f} yrs exp (required {min_years_req})" if jd_requires_experience else ""
             decision_caveat = (
                 f"Recommended: {matched_essential_count}/{total_hard_essential} essential requirements matched "
@@ -385,20 +437,29 @@ class CandidateEvaluator:
                 f"{tenure_note}."
             )
 
+        elif not ambiguity_could_change_decision and not (total_hard_essential == 1 and n_transferable > 0 and n_missing == 0):
+            # Clear mismatch or missing core requirements. Transferable skills alone do NOT trigger manual review.
+            rec = Recommendation.NOT_RECOMMENDED
+            miss_names = [r.requirement_text for r in missing_critical[:3]]
+            decision_caveat = (
+                f"Not Recommended: Missing critical mandatory requirements; unrelated skills cannot compensate "
+                f"(score {overall:.0f}/100; missing: {', '.join(miss_names) if miss_names else f'{n_missing} core requirements'})."
+            )
+
         else:
-            # Borderline: some requirements met, some uncertain, or score in mid-range.
-            rec = Recommendation.FURTHER_REVIEW
+            # Unresolved ambiguity could materially change decision (or single transferable skill requiring domain evaluation)
+            rec = Recommendation.MANUAL_REVIEW_REQUIRED
             reasons = []
             if n_uncertain > 0:
                 u_names = [r.requirement_text for r in uncertain_essential[:2]]
-                reasons.append(f"Ambiguous evidence for: {', '.join(u_names)}")
-            if n_transferable > 0 and n_missing > 0:
-                reasons.append(f"{n_transferable} transferable skill(s) present but {n_missing} core requirement(s) not satisfied")
+                reasons.append(f"Unresolved ambiguity could materially change decision for: {', '.join(u_names)}")
+            elif n_transferable > 0:
+                reasons.append(f"{n_transferable} transferable skill(s) present requiring domain assessment")
             if jd_requires_experience and not tenure_satisfied:
                 reasons.append(f"Experience {verified_tenure:.1f} yrs vs required {min_years_req}")
             if not reasons:
-                reasons.append(f"Overall fit {overall:.0f}/100 — borderline match requiring secondary screening")
-            decision_caveat = f"Further Review: {'; '.join(reasons)}."
+                reasons.append(f"Borderline match with score {overall:.0f}/100 requiring manual review")
+            decision_caveat = f"Manual Review Required: {'; '.join(reasons)}."
 
         # ── 10. RATIONALE ────────────────────────────────────────────────────
         formula = (
@@ -424,16 +485,16 @@ class CandidateEvaluator:
 
         return CandidateEvaluation(
             overall_score=overall,
-            essential_coverage_pct=all_essential_pct,
+            essential_coverage_pct=hard_essential_pct,
             preferred_coverage_pct=preferred_pct,
             practical_evidence_score=practical_score,
             experience_duration_score=exp_duration_score,
             project_depth_score=project_score,
-            unsupported_keyword_penalty=0.0,   # absorbed into ev_mult; no separate penalty
+            unsupported_keyword_penalty=unsupported_keyword_penalty,
             verified_tenure_years=verified_tenure,
             min_years_required=min_years_req,
             recommendation=rec,
-            total_essential_count=total_essential,
+            total_essential_count=total_hard_essential,
             matched_essential_count=matched_essential_count,
             total_preferred_count=total_pref,
             matched_preferred_count=matched_pref_count,

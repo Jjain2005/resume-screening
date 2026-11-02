@@ -16,6 +16,7 @@ from modules.jd_processing.models import (
     MatchingLogic
 )
 from modules.matching_engine.hybrid_engine import HybridMatchingEngine
+from modules.matching_engine.semantic_matcher import SemanticMatcher
 from modules.matching_engine.models import MatchClassification, EvidenceStrength
 from modules.scoring.evaluator import CandidateEvaluator, ScoringWeights, Recommendation
 from modules.reporting.reporter import ScreeningReportGenerator
@@ -37,40 +38,51 @@ st.set_page_config(
 # -------------------------------------------------------------
 # Standard Recommendation Categories
 # -------------------------------------------------------------
-REC_SELECTION = "Recommended for Selection"
+REC_SELECTION = "Recommended"
 REC_MANUAL_REVIEW = "Manual Review Required"
 REC_NOT_RECOMMENDED = "Not Recommended"
+REC_UNABLE_TO_EVALUATE = "Unable to Evaluate"
 
 def normalize_recommendation(rec_val: Any) -> str:
-    """Robustly maps any recommendation value or enum to the 3 standard categories."""
+    """Robustly maps any recommendation value or enum to the standard categories."""
     if hasattr(rec_val, "value"):
         rec_str = str(rec_val.value)
     else:
         rec_str = str(rec_val)
 
     rec_lower = rec_str.lower()
-    if "selection" in rec_lower or "interview" in rec_lower or "strongly" in rec_lower:
+    if "unable" in rec_lower or "fail" in rec_lower:
+        return REC_UNABLE_TO_EVALUATE
+    elif "recommend" in rec_lower and "not" not in rec_lower:
         return REC_SELECTION
-    elif "review" in rec_lower or "borderline" in rec_lower or "potential" in rec_lower:
+    elif "review" in rec_lower or "borderline" in rec_lower or "further" in rec_lower:
         return REC_MANUAL_REVIEW
     else:
         return REC_NOT_RECOMMENDED
 
 # -------------------------------------------------------------
-# Caching Core Engine Components
+# Caching Immutable Core Engine Components Globally
 # -------------------------------------------------------------
-@st.cache_resource(show_spinner="Initializing Skill Knowledge Base and Hybrid Engine...")
-def load_heavy_engines():
+@st.cache_resource(show_spinner="Initializing Skill Knowledge Base and Semantic Models...")
+def load_shared_models():
     taxonomy = SkillTaxonomy(TAXONOMY_PATH)
-    matching_engine = HybridMatchingEngine(taxonomy)
-    return taxonomy, matching_engine
+    semantic_matcher = SemanticMatcher()
+    return taxonomy, semantic_matcher
 
-taxonomy, matching_engine = load_heavy_engines()
+taxonomy, shared_semantic_matcher = load_shared_models()
 resume_extractor = ResumeExtractor()
 
 # -------------------------------------------------------------
 # Session State Initialization
 # -------------------------------------------------------------
+if "matching_engine" not in st.session_state:
+    st.session_state.matching_engine = HybridMatchingEngine(
+        taxonomy,
+        semantic_matcher=shared_semantic_matcher
+    )
+
+matching_engine = st.session_state.matching_engine
+
 if "confirmed_jd" not in st.session_state:
     st.session_state.confirmed_jd = None
 
@@ -431,21 +443,38 @@ with tab_screening:
                 # Phase 1: Extract and pre-match all resumes deterministically
                 candidate_preps = []
                 for idx, (fname, f_obj) in enumerate(resumes_to_process):
-                    status_box.markdown(f"**Extracting & Pre-matching ({idx+1}/{len(resumes_to_process)}):** `{fname}`...")
-                    proc_resume = resume_extractor.extract_from_pdf(f_obj, filename=fname)
+                    try:
+                        status_box.markdown(f"**Extracting & Pre-matching ({idx+1}/{len(resumes_to_process)}):** `{fname}`...")
+                        proc_resume = resume_extractor.extract_from_pdf(f_obj, filename=fname)
 
-                    matching_engine.fuzzy_threshold = fuzzy_th
-                    matching_engine.semantic_threshold = sem_th
-                    matching_engine.semantic_partial_threshold = sem_part_th
-                    matches = matching_engine.match_resume_to_jd(proc_resume, st.session_state.confirmed_jd)
+                        matching_engine.fuzzy_threshold = fuzzy_th
+                        matching_engine.semantic_threshold = sem_th
+                        matching_engine.semantic_partial_threshold = sem_part_th
+                        matches = matching_engine.match_resume_to_jd(proc_resume, st.session_state.confirmed_jd)
 
-                    eval_result = evaluator.evaluate(
-                        matches,
-                        resume=proc_resume,
-                        jd=st.session_state.confirmed_jd
-                    )
-                    candidate_preps.append((proc_resume, matches, eval_result))
-                    progress_bar.progress((idx + 1) / (len(resumes_to_process) * 2))
+                        eval_result = evaluator.evaluate(
+                            matches,
+                            resume=proc_resume,
+                            jd=st.session_state.confirmed_jd
+                        )
+                        candidate_preps.append((proc_resume, matches, eval_result))
+                    except Exception as e:
+                        # Isolate candidate-level failures so one broken resume does not interrupt batch screening
+                        failed_resume = ProcessedResume(
+                            filename=fname,
+                            extraction_success=False,
+                            is_low_confidence=True,
+                            extraction_warnings=[f"Failed to process candidate resume: {str(e)}"],
+                            confidence_reasons=[f"Resume processing error: {str(e)}"]
+                        )
+                        eval_result = evaluator.evaluate(
+                            [],
+                            resume=failed_resume,
+                            jd=st.session_state.confirmed_jd
+                        )
+                        candidate_preps.append((failed_resume, [], eval_result))
+                    finally:
+                        progress_bar.progress((idx + 1) / (len(resumes_to_process) * 2))
 
                 # Phase 2: Independent candidate evaluations
                 reports = []

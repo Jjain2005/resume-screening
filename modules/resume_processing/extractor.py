@@ -377,64 +377,90 @@ class ResumeExtractor:
 
         search_sentences = exp_sentences + filtered_proj
 
+        def _parse_single_date(date_str: str, is_end: bool) -> Optional[float]:
+            s = date_str.strip()
+            if not s:
+                return None
+            if is_end and any(kw in s.lower() for kw in ["present", "current", "now", "ongoing"]):
+                return current_year_float
+
+            # 1. ISO format: YYYY-MM or YYYY-MM-DD or YYYY/MM or YYYY.MM
+            iso_m = re.search(r'\b(19\d{2}|20\d{2})[\-\/\.](0?[1-9]|1[0-2])(?:\b|[\-\/\.])', s)
+            if iso_m:
+                y = int(iso_m.group(1))
+                m = int(iso_m.group(2))
+                return float(y + (m - 1) / 12.0)
+
+            # 2. Month name + Year (e.g. Jan 2021, January 2021, Jan '21)
+            for m_name, m_val in month_map.items():
+                if re.search(r'\b' + re.escape(m_name) + r'[a-z]*\b', s.lower()):
+                    y_m = re.search(r'(?:19|20)?(\d{2})\b', s)
+                    if y_m:
+                        digits = int(y_m.group(1))
+                        y = 2000 + digits if digits < 50 else 1900 + digits
+                        return float(y + m_val / 12.0)
+
+            # 3. Numeric Month/Year: MM/YYYY or MM-YYYY or MM.YYYY
+            num_m = re.search(r'\b(0?[1-9]|1[0-2])[\-\/\.](19\d{2}|20\d{2})\b', s)
+            if num_m:
+                m = int(num_m.group(1))
+                y = int(num_m.group(2))
+                return float(y + (m - 1) / 12.0)
+
+            # 4. Year only: YYYY
+            y_m = re.search(r'\b(19\d{2}|20\d{2})\b', s)
+            if y_m:
+                y = int(y_m.group(1))
+                return float(y)
+
+            return None
+
         date_range_regex = re.compile(
-            r'(?:([a-zA-Z]{3,9}|\d{1,2})[\s,./\-]*)?(?:(?:19|20)(\d{2})|\'(\d{2}))\s*(?:-|–|—|to|\/)\s*(?:([a-zA-Z]{3,9}|\d{1,2})[\s,./\-]*)?(?:(?:19|20)(\d{2})|\'(\d{2})|Present|Current|Now)',
+            r'((?:(?:19|20)\d{2}[\-\/\.](?:0?[1-9]|1[0-2])(?:\-[\d]{1,2})?)|'
+            r'(?:(?:0?[1-9]|1[0-2])[\-\/\.](?:19|20)\d{2})|'
+            r'(?:[a-zA-Z]{3,9}\.?\s*[\']?(?:19|20)?\d{2})|'
+            r'(?:(?:19|20)\d{2}))'
+            r'\s*(?:–|—|to|\s+-\s+|-\s*|\s*-\s*|\s+\/\s+)\s*'
+            r'((?:(?:19|20)\d{2}[\-\/\.](?:0?[1-9]|1[0-2])(?:\-[\d]{1,2})?)|'
+            r'(?:(?:0?[1-9]|1[0-2])[\-\/\.](?:19|20)\d{2})|'
+            r'(?:[a-zA-Z]{3,9}\.?\s*[\']?(?:19|20)?\d{2})|'
+            r'(?:(?:19|20)\d{2})|'
+            r'(?:Present|Current|Now|Ongoing))',
             re.IGNORECASE
         )
 
-        raw_intervals: List[Tuple[float, float, str]] = []
+        raw_intervals: List[Tuple[float, float, str, bool]] = []
+        clean_kws = [k.lower().strip() for k in relevant_keywords] if relevant_keywords else []
 
-        for s in search_sentences:
+        for idx, s in enumerate(search_sentences):
             if s.section == SectionType.EDUCATION or academic_filter_regex.search(s.text):
                 continue
             matches = date_range_regex.finditer(s.text)
             for m in matches:
-                # Group extraction with flexible formats
-                full_m = m.group(0)
-                # Simpler parser per match
-                sub_parts = re.split(r'\s*(?:-|–|—|to|\/)\s*', full_m, maxsplit=1)
-                if len(sub_parts) != 2:
+                start_str, end_str = m.group(1).strip(), m.group(2).strip()
+                start_float = _parse_single_date(start_str, is_end=False)
+                end_float = _parse_single_date(end_str, is_end=True)
+
+                if start_float is None or end_float is None:
                     continue
-                start_part, end_part = sub_parts[0].strip(), sub_parts[1].strip()
-
-                try:
-                    # Parse start
-                    s_y_m = re.search(r'(?:19|20)?(\d{2})\b', start_part)
-                    if not s_y_m:
-                        continue
-                    s_y_digits = int(s_y_m.group(1))
-                    start_year = float(2000 + s_y_digits if s_y_digits < 50 else 1900 + s_y_digits)
-                    start_month = 0.0
-                    for m_name, m_val in month_map.items():
-                        if re.search(r'\b' + re.escape(m_name) + r'\b', start_part.lower()):
-                            start_month = m_val / 12.0
-                            break
-
-                    start_float = start_year + start_month
-
-                    # Parse end
-                    if any(kw in end_part.lower() for kw in ["present", "current", "now"]):
-                        end_float = current_year_float
-                    else:
-                        e_y_m = re.search(r'(?:19|20)?(\d{2})\b', end_part)
-                        if not e_y_m:
-                            continue
-                        e_y_digits = int(e_y_m.group(1))
-                        end_year = float(2000 + e_y_digits if e_y_digits < 50 else 1900 + e_y_digits)
-                        end_month = 0.0
-                        for m_name, m_val in month_map.items():
-                            if re.search(r'\b' + re.escape(m_name) + r'\b', end_part.lower()):
-                                end_month = m_val / 12.0
-                                break
-                        end_float = end_year + end_month
-
-                    if end_float >= start_float and (end_float - start_float) <= 35.0:
-                        raw_intervals.append((start_float, end_float, full_m))
-                except Exception:
-                    continue
+                if end_float >= start_float and (end_float - start_float) <= 35.0:
+                    is_rel = True
+                    if clean_kws:
+                        s_text_lower = s.text.lower()
+                        is_rel = any(re.search(r'\b' + re.escape(kw) + r'\b', s_text_lower) for kw in clean_kws)
+                        if not is_rel:
+                            # Check subsequent bullet points for this position, stopping at the next job/date boundary
+                            for next_s in search_sentences[idx + 1: min(len(search_sentences), idx + 6)]:
+                                if date_range_regex.search(next_s.text):
+                                    break
+                                if any(re.search(r'\b' + re.escape(kw) + r'\b', next_s.text.lower()) for kw in clean_kws):
+                                    is_rel = True
+                                    break
+                    raw_intervals.append((start_float, end_float, m.group(0), is_rel))
 
         if not raw_intervals:
             processed.verified_experience_years = 0.0
+            processed.relevant_experience_years = 0.0
             processed.employment_periods = []
             processed.timeline_summary = "No verifiable employment date intervals found."
             return 0.0
@@ -444,7 +470,7 @@ class ResumeExtractor:
 
         # Merge overlapping intervals (Interval Scheduling Algorithm)
         merged_intervals: List[Tuple[float, float]] = []
-        for start, end, _ in raw_intervals:
+        for start, end, _, _ in raw_intervals:
             if not merged_intervals:
                 merged_intervals.append((start, end))
             else:
@@ -459,10 +485,43 @@ class ResumeExtractor:
         total_duration = sum(end - start for start, end in merged_intervals)
         verified_years = round(total_duration, 1)
 
+        # Merge relevant intervals if keywords provided
+        if clean_kws:
+            rel_raw = [(start, end) for start, end, _, is_rel in raw_intervals if is_rel]
+            rel_raw.sort(key=lambda x: (x[0], x[1]))
+            merged_rel: List[Tuple[float, float]] = []
+            for start, end in rel_raw:
+                if not merged_rel:
+                    merged_rel.append((start, end))
+                else:
+                    p_start, p_end = merged_rel[-1]
+                    if start <= p_end + 0.16:
+                        merged_rel[-1] = (p_start, max(p_end, end))
+                    else:
+                        merged_rel.append((start, end))
+            relevant_years = round(sum(end - start for start, end in merged_rel), 1)
+        else:
+            relevant_years = verified_years
+
         processed.verified_experience_years = verified_years
+        processed.relevant_experience_years = relevant_years
         processed.employment_periods = [
             {"start": round(s, 2), "end": round(e, 2), "duration_years": round(e - s, 1)}
             for s, e in merged_intervals
         ]
-        processed.timeline_summary = f"{verified_years} verified years across {len(merged_intervals)} non-overlapping period(s)."
+        if clean_kws and relevant_years != verified_years:
+            processed.timeline_summary = f"{verified_years} verified years ({relevant_years} relevant) across {len(merged_intervals)} non-overlapping period(s)."
+        else:
+            processed.timeline_summary = f"{verified_years} verified years across {len(merged_intervals)} non-overlapping period(s)."
         return verified_years
+
+    def calculate_relevant_experience_years(
+        self,
+        processed: Union[ProcessedResume, str],
+        relevant_keywords: List[str]
+    ) -> float:
+        """Calculates non-overlapping years of experience relevant to specific keywords/skills."""
+        self.calculate_verified_experience_years(processed, relevant_keywords=relevant_keywords)
+        if isinstance(processed, ProcessedResume):
+            return processed.relevant_experience_years
+        return 0.0

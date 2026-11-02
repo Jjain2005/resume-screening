@@ -3,17 +3,30 @@ from typing import Dict, List, Optional, Any
 from enum import Enum
 
 class Recommendation(str, Enum):
-    RECOMMENDED_FOR_SELECTION = "Recommended for Selection"
-    FURTHER_REVIEW = "Further Review"            # Borderline — automated follow-up
+    RECOMMENDED = "Recommended"
     NOT_RECOMMENDED = "Not Recommended"
-    UNABLE_TO_EVALUATE = "Unable to Evaluate"    # Extraction / API failure — system issue only
+    MANUAL_REVIEW_REQUIRED = "Manual Review Required"
+    UNABLE_TO_EVALUATE = "Unable to Evaluate"
 
     # Backward-compatible aliases
-    STRONGLY_RECOMMENDED = "Recommended for Selection"
-    RECOMMENDED = "Recommended for Selection"
-    MANUAL_REVIEW_REQUIRED = "Further Review"    # Legacy alias — maps to FURTHER_REVIEW
-    BORDERLINE = "Further Review"
+    RECOMMENDED_FOR_SELECTION = "Recommended"
+    STRONGLY_RECOMMENDED = "Recommended"
+    FURTHER_REVIEW = "Manual Review Required"
+    BORDERLINE = "Manual Review Required"
     LOW_MATCH = "Not Recommended"
+
+    @classmethod
+    def _missing_(cls, value):
+        val = str(value).lower()
+        if "unable" in val or "fail" in val:
+            return cls.UNABLE_TO_EVALUATE
+        if "select" in val or ("recommend" in val and "not" not in val):
+            return cls.RECOMMENDED
+        if "review" in val or "borderline" in val or "further" in val:
+            return cls.MANUAL_REVIEW_REQUIRED
+        if "not" in val or "reject" in val or "low" in val:
+            return cls.NOT_RECOMMENDED
+        return cls.NOT_RECOMMENDED
 
 @dataclass
 class ScoringWeights:

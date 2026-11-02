@@ -463,11 +463,13 @@ class GroqContextualEvaluator:
                 )
                 final_eval = det_eval
                 if llm_eval and llm_eval.get("llm_applied"):
+                    # Python calculates all scores and decisions using one consistent formula.
+                    # Groq provides qualitative synthesis and evidence interpretation.
                     final_eval = evaluator.evaluate(
                         matches,
                         resume=resume,
                         jd=jd,
-                        llm_score=llm_eval.get("overall_score"),
+                        llm_score=None,
                         llm_recommendation=llm_eval.get("llm_suggested_recommendation"),
                         llm_synthesis=llm_eval.get("executive_summary")
                     )
