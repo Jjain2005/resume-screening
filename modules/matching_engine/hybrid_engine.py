@@ -1,3 +1,4 @@
+import re
 from typing import List, Optional
 from .models import (
     MatchClassification,
@@ -23,8 +24,8 @@ class HybridMatchingEngine:
         taxonomy: SkillTaxonomy,
         semantic_matcher: Optional[SemanticMatcher] = None,
         fuzzy_threshold: float = 85.0,
-        semantic_threshold: float = 0.70,
-        semantic_partial_threshold: float = 0.52
+        semantic_threshold: float = 0.76,
+        semantic_partial_threshold: float = 0.65
     ):
         self.taxonomy = taxonomy
         self.exact_matcher = ExactMatcher(taxonomy)
@@ -167,16 +168,28 @@ class HybridMatchingEngine:
         # -------------------------------------------------------------
         # Stage 3: Semantic Matching against Resume Sentences
         # -------------------------------------------------------------
-        # Compare either full requirement text or target skill description
+        # Retrieve candidate matches above threshold to find the best domain-relevant hit
+        candidates = []
         if precomputed_semantic_hit is not None:
-            sem_sentence, sem_score = precomputed_semantic_hit
-        else:
-            semantic_query = req.text
-            sem_hit = self.semantic_matcher.find_best_semantic_match(semantic_query, resume)
-            sem_sentence = sem_hit[0] if sem_hit else None
-            sem_score = sem_hit[1] if sem_hit else 0.0
+            candidates.append(precomputed_semantic_hit)
 
-        if sem_sentence and sem_score >= self.semantic_threshold:
+        all_sem_hits = self.semantic_matcher.find_all_matches_above_threshold(
+            req.text, resume, threshold=self.semantic_partial_threshold
+        )
+        for s_sent, s_score in all_sem_hits:
+            if not any(c[0].text == s_sent.text for c in candidates):
+                candidates.append((s_sent, s_score))
+
+        # Check for strong semantic match with verified domain relevance
+        strong_hit = None
+        for s_sent, s_score in candidates:
+            if s_score >= self.semantic_threshold:
+                if self._verify_domain_relevance(req, s_sent):
+                    strong_hit = (s_sent, s_score)
+                    break
+
+        if strong_hit:
+            sem_sentence, sem_score = strong_hit
             # Check if this sentence actually describes a related but non-equivalent alternative skill
             # (e.g. Angular when React was requested, or PostgreSQL when MySQL was requested)
             if target_skill:
@@ -242,7 +255,15 @@ class HybridMatchingEngine:
         # -------------------------------------------------------------
         # Stage 5: Partial Evidence / Borderline Semantic
         # -------------------------------------------------------------
-        if sem_sentence and sem_score >= self.semantic_partial_threshold:
+        partial_hit = None
+        for s_sent, s_score in candidates:
+            if s_score >= self.semantic_partial_threshold:
+                if self._verify_domain_relevance(req, s_sent):
+                    partial_hit = (s_sent, s_score)
+                    break
+
+        if partial_hit:
+            sem_sentence, sem_score = partial_hit
             strength = ContextualMatcher.evaluate_evidence_strength(sem_sentence)
             return RequirementMatchResult(
                 requirement_id=req.id,
@@ -338,3 +359,71 @@ class HybridMatchingEngine:
                     return (matched_term, rel.type.value, sentence)
 
         return None
+
+    def _verify_domain_relevance(
+        self,
+        req: RequirementItem,
+        sentence: EvidenceSentence
+    ) -> bool:
+        """
+        Validates that a candidate evidence sentence shares topical/domain relevance
+        with the target requirement to prevent generic linguistic false positives
+        (e.g., matching 'database indexing in PostgreSQL' to 'Natural Language Processing').
+        """
+        if req.req_type == RequirementType.RESPONSIBILITY:
+            return True
+
+        req_text_clean = normalize_text(req.text)
+        sent_text_clean = normalize_text(sentence.text)
+
+        stopwords = {
+            "strong", "experience", "proficiency", "proficient", "hands", "on", "working",
+            "knowledge", "expertise", "years", "year", "professional", "understanding",
+            "skills", "skill", "ability", "background", "good", "plus", "bonus",
+            "familiarity", "frameworks", "framework", "tools", "tool", "technologies",
+            "technology", "platforms", "platform", "environments", "environment",
+            "develop", "development", "building", "built", "using", "with", "and", "or",
+            "for", "the", "in", "of", "to", "a", "an", "at", "by", "from", "on",
+            "demonstrated", "proven", "minimum", "required", "requirements"
+        }
+
+        req_words = [w for w in re.findall(r'\b[a-z0-9+#.]+\b', req_text_clean) if len(w) >= 2 and w not in stopwords]
+        sent_words = set(w for w in re.findall(r'\b[a-z0-9+#.]+\b', sent_text_clean) if len(w) >= 2 and w not in stopwords)
+
+        # 1. Direct lexical domain overlap
+        if set(req_words) & sent_words:
+            return True
+
+        # 2. Canonical skill & taxonomy alias / relationship check
+        target_skill = req.canonical_skill
+        if target_skill:
+            entry = self.taxonomy.get_skill(target_skill)
+            if entry:
+                for alias in entry.aliases:
+                    alias_norm = normalize_text(alias)
+                    if alias_norm and re.search(rf'\b{re.escape(alias_norm)}\b', sent_text_clean):
+                        return True
+                for rel in entry.relationships:
+                    rel_target = normalize_text(rel.target)
+                    if rel_target and re.search(rf'\b{re.escape(rel_target)}\b', sent_text_clean):
+                        return True
+                    rel_entry = self.taxonomy.get_skill(rel.target)
+                    if rel_entry:
+                        for rel_alias in rel_entry.aliases:
+                            rel_alias_norm = normalize_text(rel_alias)
+                            if rel_alias_norm and re.search(rf'\b{re.escape(rel_alias_norm)}\b', sent_text_clean):
+                                return True
+
+
+        # 3. Education / degree matching
+        if req.req_type == RequirementType.EDUCATION or any(kw in req_text_clean for kw in ["degree", "bachelor", "master", "phd", "computer science"]):
+            edu_keywords = {"bachelor", "master", "phd", "degree", "bs", "ms", "computer", "science", "engineering", "technology", "university", "college"}
+            if (set(req_words) & edu_keywords) and (sent_words & edu_keywords):
+                return True
+
+        # If the requirement had no specific domain words, allow
+        if len(req_words) <= 1 and not target_skill:
+            return True
+
+        return False
+

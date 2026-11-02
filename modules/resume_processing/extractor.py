@@ -18,36 +18,43 @@ from .models import (
     SectionType
 )
 
+COMPOSITE_EXP_PROJ_PATTERN = re.compile(
+    r'^(?:(?:work\s+|professional\s+)?experience\s+(?:&|and|/)\s+(?:key\s+|selected\s+|academic\s+|personal\s+|technical\s+)?projects|'
+    r'(?:key\s+|selected\s+|academic\s+|personal\s+|technical\s+)?projects\s+(?:&|and|/)\s+(?:work\s+|professional\s+)?experience)[\s:]*$',
+    re.IGNORECASE
+)
+
 SECTION_PATTERNS = [
+    (SectionType.SUMMARY, re.compile(
+        r'^(?:professional\s+summary|summary|profile|professional\s+profile|about\s+me|career\s+objective|objective|executive\s+summary|personal\s+statement|overview)[\s:]*$',
+        re.IGNORECASE
+    )),
     (SectionType.EXPERIENCE, re.compile(
-        r'^(?:professional\s+|work\s+|relevant\s+|industry\s+)?(?:experience|history|employment|work\s+record|experience\s+history|career\s+history)[\s:]*$',
+        r'^(?:professional\s+|work\s+|relevant\s+|industry\s+|practical\s+)?(?:experience|history|employment|work\s+record|experience\s+history|career\s+history|professional\s+background|employment\s+history)[\s:]*$',
         re.IGNORECASE
     )),
     (SectionType.PROJECTS, re.compile(
-        r'^(?:key\s+|selected\s+|academic\s+|recent\s+|personal\s+|technical\s+)?(?:projects|project\s+experience|project\s+work)[\s:]*$',
+        r'^(?:key\s+|selected\s+|academic\s+|recent\s+|personal\s+|technical\s+|notable\s+|major\s+|capstone\s+|open\s+source\s+)?(?:projects|project\s+experience|project\s+work|projects\s+undertaken)[\s:]*$',
         re.IGNORECASE
     )),
     (SectionType.SKILLS, re.compile(
-        r'^(?:technical\s+|core\s+|key\s+|professional\s+)?(?:skills|competencies|technologies|tools|proficiencies|tech\s+stack|skills\s+&\s+tools|skills\s+and\s+tools|core\s+strengths)[\s:]*$',
+        r'^(?:technical\s+|core\s+|key\s+|professional\s+|relevant\s+|it\s+)?(?:skills|competencies|technologies|tools|proficiencies|tech\s+stack|expertise|technical\s+expertise|skills\s+&\s+tools|skills\s+and\s+tools|skills\s+&\s+technologies|skills\s+and\s+technologies|tools\s+&\s+technologies|tools\s+and\s+technologies|programming\s+languages|core\s+strengths|core\s+competencies|areas\s+of\s+expertise)[\s:]*$',
         re.IGNORECASE
     )),
     (SectionType.EDUCATION, re.compile(
-        r'^(?:education|academic\s+qualifications|academic\s+background|academics|educational\s+background)[\s:]*$',
+        r'^(?:education|academic\s+qualifications|academic\s+background|academics|educational\s+background|educational\s+qualifications|degrees\s+&\s+education)[\s:]*$',
         re.IGNORECASE
     )),
     (SectionType.CERTIFICATIONS, re.compile(
-        r'^(?:certifications|certificates|licenses|credentials|courses\s+&\s+certifications)[\s:]*$',
+        r'^(?:certifications|certificates|licenses|credentials|courses\s+&\s+certifications|licenses\s+&\s+certifications|professional\s+certifications)[\s:]*$',
         re.IGNORECASE
     )),
     (SectionType.ACHIEVEMENTS, re.compile(
-        r'^(?:achievements|awards|honors|accomplishments|awards\s+&\s+honors)[\s:]*$',
-        re.IGNORECASE
-    )),
-    (SectionType.SUMMARY, re.compile(
-        r'^(?:professional\s+summary|summary|profile|about\s+me|career\s+objective|objective|executive\s+summary)[\s:]*$',
+        r'^(?:achievements|awards|honors|accomplishments|awards\s+&\s+honors|honors\s+&\s+awards|key\s+achievements|publications|patents)[\s:]*$',
         re.IGNORECASE
     )),
 ]
+
 
 def clean_text_preserving_structure(text: str) -> str:
     """Clean text while preserving sentence punctuation and bullet boundaries."""
@@ -209,7 +216,9 @@ class ResumeExtractor:
         lines = processed.cleaned_text.split("\n")
         current_section = SectionType.GENERAL
         current_heading = "General"
+        is_composite_exp_proj = False
         section_lines: Dict[SectionType, List[str]] = {st: [] for st in SectionType}
+        composite_lines: List[str] = []
 
         for line in lines:
             line_str = line.strip()
@@ -218,17 +227,36 @@ class ResumeExtractor:
 
             # Check if this line is a section heading
             matched_section = None
-            if len(line_str) < 50:
-                for sec_type, pattern in SECTION_PATTERNS:
-                    if pattern.match(line_str):
-                        matched_section = sec_type
-                        break
+            is_composite = False
+            if len(line_str) < 55:
+                if COMPOSITE_EXP_PROJ_PATTERN.match(line_str):
+                    is_composite = True
+                else:
+                    for sec_type, pattern in SECTION_PATTERNS:
+                        if pattern.match(line_str):
+                            matched_section = sec_type
+                            break
 
-            if matched_section:
+            if is_composite:
+                is_composite_exp_proj = True
+                current_heading = line_str
+            elif matched_section:
+                is_composite_exp_proj = False
                 current_section = matched_section
                 current_heading = line_str
             else:
-                section_lines[current_section].append(line_str)
+                if is_composite_exp_proj:
+                    composite_lines.append(line_str)
+                else:
+                    section_lines[current_section].append(line_str)
+
+        # Process composite lines if any
+        if composite_lines:
+            # Route lines within composite section to both Experience and Projects
+            # to preserve evidence provenance for both verified tenure and project depth
+            for cline in composite_lines:
+                section_lines[SectionType.EXPERIENCE].append(cline)
+                section_lines[SectionType.PROJECTS].append(cline)
 
         # Build ResumeSection objects and sentences
         all_sentences = []
@@ -253,6 +281,7 @@ class ResumeExtractor:
 
         # 4. Calculate verified non-overlapping experience timeline
         self.calculate_verified_experience_years(processed)
+
 
     def check_extraction_confidence(self, processed: ProcessedResume):
         """

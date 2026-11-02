@@ -1097,4 +1097,158 @@ def test_unclear_evidence_and_extraction_failure_route_to_manual_review():
     assert eval_failed.recommendation == Recommendation.MANUAL_REVIEW_REQUIRED
     assert eval_failed.is_low_confidence_extraction is True
 
+# -------------------------------------------------------------
+# 26. Composite Section Headings Recognition & Evidence Provenance
+# -------------------------------------------------------------
+def test_composite_section_heading_recognition(resume_extractor):
+    raw_text = """John Doe
+Software Engineer
+
+TECHNICAL SKILLS
+Python, Docker, SQL, Git
+
+PROJECTS & EXPERIENCE
+Software Engineer at Acme Corp (2021 - 2024)
+• Architected high-throughput microservices using Python and Docker.
+• Deployed scalable services on Kubernetes clusters.
+
+AI Agent Platform (Personal Project)
+• Built an autonomous ReAct AI agent using LangChain and FastAPI.
+• Optimized latency and reduced API costs by 35%.
+
+EDUCATION
+B.S. in Computer Science (2017 - 2021)
+"""
+    processed = ProcessedResume(filename="composite.pdf", cleaned_text=raw_text, raw_text=raw_text)
+    resume_extractor._segment_sections(processed)
+
+    # Experience section must contain the employment role
+    exp_sentences = processed.get_sentences_by_section(SectionType.EXPERIENCE)
+    assert len(exp_sentences) >= 2
+    # Projects section must contain the project sentences
+    proj_sentences = processed.get_sentences_by_section(SectionType.PROJECTS)
+    assert len(proj_sentences) >= 2
+    # Verified experience must capture tenure
+    assert processed.verified_experience_years >= 2.5
+
+# -------------------------------------------------------------
+# 27. JD Preamble & Responsibilities Non-Blocker Prioritization
+# -------------------------------------------------------------
+def test_jd_preamble_and_responsibilities_handling(jd_parser):
+    jd_text = """Senior Machine Learning Engineer
+About Acme AI:
+We are a leading AI startup revolutionizing healthcare with generative models.
+We are looking for a passionate Senior ML Engineer to join our collaborative team.
+
+Responsibilities:
+• Collaborate with cross-functional product and clinical teams.
+• Design, evaluate, and maintain production inference pipelines.
+• Participate in daily standups and code reviews.
+
+Minimum Requirements:
+• 4+ years of Python development experience
+• Strong expertise in PyTorch or TensorFlow
+
+Preferred Qualifications:
+• Experience with Docker and Kubernetes
+"""
+    jd = jd_parser.parse(jd_text, jd_id="ai_preamble_test")
+
+    # Preamble lines ("About Acme AI", "We are a leading AI startup") must NOT be parsed as requirements
+    req_texts = [r.text.lower() for r in jd.requirements]
+    assert not any("leading ai startup" in t for t in req_texts)
+    assert not any("join our collaborative team" in t for t in req_texts)
+
+    # Responsibilities must be tagged as RESPONSIBILITY with PREFERRED priority and weight 0.5
+    resp_reqs = [r for r in jd.requirements if r.req_type == ReqType.RESPONSIBILITY]
+    assert len(resp_reqs) >= 2
+    for r in resp_reqs:
+        assert r.priority == RequirementPriority.PREFERRED
+        assert r.weight == 0.5
+
+    # Only core technical competencies under Minimum Requirements act as REQUIRED
+    mandatory_reqs = jd.get_requirements_by_priority(RequirementPriority.REQUIRED)
+    assert len(mandatory_reqs) == 2
+    assert any("python" in r.text.lower() for r in mandatory_reqs)
+    assert any("pytorch" in r.text.lower() for r in mandatory_reqs)
+
+# -------------------------------------------------------------
+# 28. Semantic False Positive Prevention (Domain Concept Verification)
+# -------------------------------------------------------------
+def test_semantic_false_positive_prevention(matching_engine):
+    # Candidate with database indexing skills in PostgreSQL
+    resume = ProcessedResume(filename="db_dev.pdf")
+    resume.all_sentences = [
+        EvidenceSentence(
+            text="Strong database optimization skills in PostgreSQL with index tuning and query planning.",
+            section=SectionType.EXPERIENCE
+        )
+    ]
+
+    # Requirement 1: NLP / Deep Learning
+    req_nlp = RequirementItem(
+        id="nlp_1",
+        text="Strong expertise in Natural Language Processing (NLP) or Deep Learning",
+        req_type=ReqType.SKILL,
+        priority=RequirementPriority.REQUIRED,
+        canonical_skill="Natural Language Processing"
+    )
+    result_nlp = matching_engine.match_single_requirement(req_nlp, resume)
+    # Must NOT match PostgreSQL as a strong semantic match!
+    assert result_nlp.classification == MatchClassification.NOT_FOUND
+
+    # Requirement 2: PyTorch / TensorFlow
+    req_pytorch = RequirementItem(
+        id="pt_1",
+        text="Hands-on proficiency with PyTorch or TensorFlow frameworks",
+        req_type=ReqType.SKILL,
+        priority=RequirementPriority.REQUIRED,
+        canonical_skill="PyTorch"
+    )
+    result_pt = matching_engine.match_single_requirement(req_pytorch, resume)
+    # Must NOT match PostgreSQL as a strong semantic match!
+    assert result_pt.classification == MatchClassification.NOT_FOUND
+
+# -------------------------------------------------------------
+# 29. Unqualified Candidates Default to NOT_RECOMMENDED
+# -------------------------------------------------------------
+def test_unqualified_candidates_fall_to_not_recommended():
+    evaluator = CandidateEvaluator()
+
+    # Candidate with 3 required skills, matches only 1 peripheral skill, missing 2 core skills
+    matches = [
+        RequirementMatchResult(
+            requirement_id="r1",
+            requirement_text="Python",
+            priority="Required",
+            classification=MatchClassification.EXACT_MATCH,
+            matched_term="Python",
+            evidence_strength=EvidenceStrength.STRONG_IMPLEMENTATION,
+            resume_section=SectionType.EXPERIENCE,
+            evidence_sentence="Developed backend scripts in Python."
+        ),
+        RequirementMatchResult(
+            requirement_id="r2",
+            requirement_text="PyTorch deep learning",
+            priority="Required",
+            classification=MatchClassification.NOT_FOUND,
+            evidence_strength=EvidenceStrength.NONE
+        ),
+        RequirementMatchResult(
+            requirement_id="r3",
+            requirement_text="Distributed Systems Architecture",
+            priority="Required",
+            classification=MatchClassification.NOT_FOUND,
+            evidence_strength=EvidenceStrength.NONE
+        )
+    ]
+    resume = ProcessedResume(filename="weak.pdf", verified_experience_years=2.0)
+    evaluation = evaluator.evaluate(matches, resume=resume)
+
+    # Must be firmly NOT_RECOMMENDED, NEVER default to MANUAL_REVIEW_REQUIRED
+    assert evaluation.recommendation == Recommendation.NOT_RECOMMENDED
+    assert evaluation.overall_score <= 45.0
+    assert "not recommended" in evaluation.decision_rationale.lower()
+
+
 

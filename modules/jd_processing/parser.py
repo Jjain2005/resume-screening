@@ -34,31 +34,60 @@ class JobDescriptionParser:
                     title_inferred_from_first_line = True
 
         requirements: List[RequirementItem] = []
-        current_priority = RequirementPriority.REQUIRED
         req_counter = 1
+
+        # Check if the JD has recognizable section headers
+        section_heading_keywords = [
+            "requirements", "required", "minimum qualifications", "must have", "what you need",
+            "preferred", "nice to have", "bonus", "good to have", "desired", "plus", "optional",
+            "responsibilities", "what you will do", "duties", "role overview"
+        ]
+        has_section_headers = any(
+            any(kw in line.lower() for kw in section_heading_keywords) and len(line.strip()) < 50
+            for line in lines
+        )
+
+        in_preamble = has_section_headers
+        current_priority = RequirementPriority.REQUIRED
+        current_section_type = "default"
 
         for idx, line in enumerate(lines):
             # Skip the first line if it was used as the title
             if idx == 0 and title_inferred_from_first_line:
                 continue
 
-            line_lower = line.lower()
+            line_lower = line.lower().strip()
 
             # Detect section heading transitions
-            if any(kw in line_lower for kw in ["preferred", "nice to have", "bonus", "good to have", "desired", "plus", "optional"]):
+            if any(kw in line_lower for kw in ["preferred", "nice to have", "bonus", "good to have", "desired", "plus", "optional"]) and len(line_lower) < 50:
                 current_priority = RequirementPriority.PREFERRED
-                if len(line.strip()) < 35:
-                    continue
-            elif any(kw in line_lower for kw in ["requirements", "required", "minimum qualifications", "must have", "what you need", "what we're looking for"]):
+                current_section_type = "preferred"
+                in_preamble = False
+                continue
+            elif any(kw in line_lower for kw in ["requirements", "required", "minimum qualifications", "must have", "basic qualifications", "what you need", "what we're looking for"]) and len(line_lower) < 50:
                 current_priority = RequirementPriority.REQUIRED
-                if len(line.strip()) < 35:
-                    continue
-            elif any(kw in line_lower for kw in ["responsibilities", "what you will do", "duties", "role overview", "soft skills"]):
-                if len(line.strip()) < 35:
+                current_section_type = "required"
+                in_preamble = False
+                continue
+            elif any(kw in line_lower for kw in ["responsibilities", "what you will do", "duties", "role overview", "day to day", "key responsibilities"]) and len(line_lower) < 50:
+                # Responsibilities provide context without acting as mandatory blockers
+                current_priority = RequirementPriority.PREFERRED
+                current_section_type = "responsibilities"
+                in_preamble = False
+                continue
+            elif any(kw in line_lower for kw in ["about us", "company overview", "about the company", "who we are", "about the role"]) and len(line_lower) < 50:
+                in_preamble = True
+                continue
+
+            # If still in preamble before first section header, do not treat as requirements
+            if in_preamble:
+                # Only keep line if it has explicit qualification keywords
+                if not any(qkw in line_lower for qkw in ["must have", "minimum of", "required:", "qualifications:"]):
                     continue
 
-            # Strip leading bullets, numbers, hyphens
-            cleaned_line = re.sub(r'^[•\-\*\d\.\)\s]+', '', line).strip()
+            # Strip leading bullets, numbers, hyphens without removing digits from e.g. "4+ years"
+            cleaned_line = re.sub(r'^[\s•\-\*\u2022\u25E6\u25AA\u25CF]+\s*', '', line)
+            cleaned_line = re.sub(r'^\(?\d+[\.\)]\s*', '', cleaned_line).strip()
             if not cleaned_line or len(cleaned_line) < 3:
                 continue
 
@@ -94,23 +123,32 @@ class JobDescriptionParser:
 
             for sentence_text in sub_sentences:
                 req_type = self._detect_requirement_type(sentence_text)
+                if current_section_type == "responsibilities":
+                    req_type = RequirementType.RESPONSIBILITY
+                    item_priority = RequirementPriority.PREFERRED
+                    weight = 0.5
+                else:
+                    item_priority = current_priority
+                    weight = 1.5 if item_priority == RequirementPriority.REQUIRED else 1.0
+
                 min_years = self._extract_min_years(sentence_text) if req_type == RequirementType.EXPERIENCE else None
                 canonical_skill = self._detect_canonical_skill(sentence_text)
 
-                if canonical_skill and req_type not in (RequirementType.EDUCATION, RequirementType.CERTIFICATION):
+                if canonical_skill and req_type not in (RequirementType.EDUCATION, RequirementType.CERTIFICATION, RequirementType.RESPONSIBILITY):
                     req_type = RequirementType.SKILL
 
                 item = RequirementItem(
                     id=f"req_{req_counter}",
                     text=sentence_text,
                     req_type=req_type,
-                    priority=current_priority,
+                    priority=item_priority,
                     canonical_skill=canonical_skill,
                     min_years=min_years,
-                    weight=1.5 if current_priority == RequirementPriority.REQUIRED else 1.0
+                    weight=weight
                 )
                 requirements.append(item)
                 req_counter += 1
+
 
         return JobDescription(
             id=jd_id,

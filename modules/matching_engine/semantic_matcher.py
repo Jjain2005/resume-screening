@@ -13,8 +13,8 @@ class SemanticMatcher:
     def __init__(
         self,
         model_name: str = DEFAULT_MODEL_NAME,
-        similarity_threshold: float = 0.70,
-        partial_threshold: float = 0.52
+        similarity_threshold: float = 0.76,
+        partial_threshold: float = 0.65
     ):
         self.model_name = model_name
         self.similarity_threshold = similarity_threshold

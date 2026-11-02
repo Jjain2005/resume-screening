@@ -289,6 +289,11 @@ class CandidateEvaluator:
                 - unsupported_penalty
             )
 
+        n_missing = len(missing_critical)
+        n_transferable_req = len(transferable_essential)
+        n_uncertain_req = len(uncertain_essential)
+        extraction_clean = not is_low_conf
+
         # ---------------------------------------------------------------
         # MANDATORY COMPETENCY GATING
         # No amount of unrelated skills, tenure, or preferred coverage can
@@ -302,18 +307,23 @@ class CandidateEvaluator:
                 # Soft ceiling: cannot cross into Selection band without strong coverage
                 overall = min(overall, essential_pct + 12.0, 64.0)
 
+            # Enforce ceiling if critical mandatory requirements are missing without transferable alternative
+            if n_missing >= 2 and n_transferable_req == 0:
+                overall = min(overall, 44.0)
+            elif n_missing >= 1 and n_transferable_req == 0:
+                overall = min(overall, 58.0)
+
         overall = min(100.0, max(0.0, overall))
 
         # ---------------------------------------------------------------
         # 8. DETERMINISTIC DECISION RULES — STRICT PRIORITY ORDER
         #
         #  Rule A (highest priority): Extraction failure / low confidence
-        #  Rule B: Clear mandatory gap — NOT_FOUND majority or zero confirmed matches
-        #          This runs BEFORE the uncertain-evidence guard so that candidates
-        #          who are clearly unqualified are not misclassified as "ambiguous".
+        #  Rule B: Clear mandatory gap / low qualification → Not Recommended
         #  Rule C: Uncertain evidence on mandatory items (genuinely ambiguous)
         #  Rule D: Strong comprehensive JD match → Recommended for Selection
-        #  Rule E (lowest priority): Borderline / transferable / tenure gap
+        #  Rule E: Borderline / transferable / tenure gap → Manual Review
+        #  Fallback else: → Not Recommended
         # ---------------------------------------------------------------
         is_tenure_exempt = (self.weights.relevant_experience_weight <= 0.01)
         tenure_satisfied = (
@@ -321,10 +331,6 @@ class CandidateEvaluator:
             or min_years_req is None
             or verified_tenure >= (min_years_req - 0.25)
         )
-        n_missing = len(missing_critical)
-        n_transferable_req = len(transferable_essential)
-        n_uncertain_req = len(uncertain_essential)
-        extraction_clean = not is_low_conf
 
         # --- A. Extraction failure ---
         if is_low_conf:
@@ -335,23 +341,24 @@ class CandidateEvaluator:
             )
 
         # --- B. Clear mandatory gap → Not Recommended ---
-        # Checked BEFORE rule C so clearly unqualified candidates are not
-        # routed to manual review simply because they have 1 ambiguous item.
         elif total_essential > 0 and extraction_clean and (
             # Majority of mandatory requirements completely missing
             n_missing > (total_essential / 2)
+            # Two or more mandatory requirements missing without transferable alternatives
+            or (n_missing >= 2 and n_transferable_req == 0 and n_uncertain_req == 0)
             # Zero confirmed essential matches, no transferable alternatives, and no uncertain items
-            # (if there are uncertain items they belong in Rule C — genuinely ambiguous)
             or (matched_essential_count == 0 and n_transferable_req == 0 and n_uncertain_req == 0)
             # Below 50% coverage, real gaps exist, no transferable or uncertain escape hatch
             or (essential_pct < 50.0 and n_missing > 0
                 and n_transferable_req == 0 and n_uncertain_req == 0)
+            # Low overall score with missing mandatory competencies
+            or (overall < 45.0 and n_transferable_req == 0 and n_uncertain_req == 0)
             # Skills listed but NONE demonstrated in real work/projects, low practical evidence
             or (matched_essential_count > 0
                 and len(demonstrated_essential) == 0
                 and practical_score < 20.0
                 and essential_pct < 65.0
-                and not has_transferable)
+                and n_transferable_req == 0)
         ):
             rec = Recommendation.NOT_RECOMMENDED
             missing_names = [r.requirement_text for r in missing_critical]
@@ -362,9 +369,7 @@ class CandidateEvaluator:
             )
 
         # --- C. Uncertain evidence on mandatory items (genuinely ambiguous) ---
-        # Only reached when there is NO clear majority gap (rule B did not fire),
-        # meaning the candidate is borderline and specific items need verification.
-        elif uncertain_essential and extraction_clean:
+        elif uncertain_essential and extraction_clean and n_missing <= 1:
             rec = Recommendation.MANUAL_REVIEW_REQUIRED
             uncertain_names = [r.requirement_text for r in uncertain_essential[:2]]
             decision_caveat = (
@@ -400,8 +405,12 @@ class CandidateEvaluator:
                     f"verified tenure ({verified_tenure} yrs), and grounded practical implementation ({practical_score:.0f}%)."
                 )
 
-        # --- E. Borderline / Transferable / Tenure gap → Manual Review ---
-        else:
+        # --- E. Borderline / Transferable / Marginal Tenure gap → Manual Review ---
+        elif (
+            (has_transferable and (n_transferable_req > 0 or essential_pct >= 55.0))
+            or (not is_tenure_exempt and min_years_req and verified_tenure < (min_years_req - 0.25) and n_missing == 0 and essential_pct >= 60.0)
+            or (50.0 <= overall < 68.0 and n_missing <= 1 and (n_transferable_req > 0 or n_uncertain_req > 0 or unsupported_penalty > 0 or (len(listed_only_essential) > 0 and len(demonstrated_essential) == 0)))
+        ):
             rec = Recommendation.MANUAL_REVIEW_REQUIRED
             reasons = []
             if has_transferable:
@@ -421,11 +430,20 @@ class CandidateEvaluator:
                     f"{len(listed_only_essential)} essential skill(s) listed but not demonstrated "
                     "in work experience or projects"
                 )
-            if 45.0 <= overall < 68.0:
+            if 50.0 <= overall < 68.0:
                 reasons.append(f"Borderline overall competency match ({overall:.1f}/100)")
             decision_caveat = (
                 f"Manual Review Required: {'; '.join(reasons) if reasons else 'Requires human assessment'}."
             )
+
+        # --- Fallback: Not Recommended ---
+        else:
+            rec = Recommendation.NOT_RECOMMENDED
+            decision_caveat = (
+                f"Not Recommended: Candidate evaluation ({overall:.1f}/100, {essential_pct:.0f}% essential coverage) "
+                f"did not satisfy minimum criteria for recommendation or borderline review."
+            )
+
 
         # ---------------------------------------------------------------
         # 9. FORMULA & RATIONALE (Explainability)
