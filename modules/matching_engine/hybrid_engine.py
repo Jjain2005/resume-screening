@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from .models import (
     MatchClassification,
     RequirementMatchResult,
@@ -11,13 +11,19 @@ from .semantic_matcher import SemanticMatcher
 from .contextual_matcher import ContextualMatcher
 from ..knowledge_base.taxonomy import SkillTaxonomy, normalize_text
 from ..knowledge_base.models import RelationshipType
-from ..jd_processing.models import JobDescription, RequirementItem, RequirementType, RequirementPriority
-from ..resume_processing.models import ProcessedResume, EvidenceSentence
+from ..jd_processing.models import (
+    JobDescription,
+    RequirementItem,
+    RequirementType,
+    RequirementPriority,
+    MatchingLogic
+)
+from ..resume_processing.models import ProcessedResume, EvidenceSentence, SectionType
 
 class HybridMatchingEngine:
     """
     Central matching intelligence combining Exact, Fuzzy, Semantic,
-    Knowledge Base Relationship, and Contextual Evidence matching.
+    Knowledge Base Relationship, Contextual Evidence matching, and Compound Logic.
     """
     def __init__(
         self,
@@ -76,22 +82,130 @@ class HybridMatchingEngine:
     ) -> RequirementMatchResult:
         """
         Multi-stage matching pipeline for a single requirement:
-        1. Exact Canonical & Known Alias Matching
-        2. Fuzzy Matching for Typos
-        3. Related Skill (Not Equivalent) Taxonomy Check
-        4. Semantic Sentence Similarity
-        5. Contextual Evidence Strength Assessment
-        6. Deterministic Classification & Calibration
+        1. Compound ALL_OF Evaluation (if multiple components required)
+        2. Exact Canonical & Known Alias Matching (including ANY_OF options)
+        3. Accepted Equivalents Matching
+        4. Fuzzy Matching for Typos
+        5. Related Skill (Not Equivalent) Taxonomy Check
+        6. Semantic Sentence Similarity
+        7. Contextual Evidence Strength Assessment
+        8. Deterministic Classification & Calibration
         """
+        # Collect top-k evidence passages for inspection & explainability
+        top_k_hits = self.semantic_matcher.find_top_k_semantic_matches(req.text, resume, k=3, threshold=0.45)
+        evidence_passages = [
+            {
+                "sentence": s.text,
+                "section": s.section.value,
+                "similarity": round(sc, 3),
+                "strength": ContextualMatcher.evaluate_evidence_strength(s).value
+            }
+            for s, sc in top_k_hits
+        ]
+
+        # -------------------------------------------------------------
+        # Stage 0a: Education Verification
+        # -------------------------------------------------------------
+        if req.req_type == RequirementType.EDUCATION or any(dk in req.text.lower() for dk in ["bachelor", "master", "ph.d", "phd", "degree in"]):
+            edu_hit = self._match_education_requirement(req, resume, evidence_passages)
+            if edu_hit:
+                return edu_hit
+
+        # -------------------------------------------------------------
+        # Stage 0b: Compound ALL_OF Logic
+        # -------------------------------------------------------------
+        if req.matching_logic == MatchingLogic.ALL_OF and len(req.compound_components) > 1:
+            component_results = {}
+            matched_components = []
+            missing_components = []
+            component_sentences = []
+            comp_strengths = []
+
+            for comp in req.compound_components:
+                # Detect core skill term if component was extracted as a phrase
+                core_comp = comp
+                if len(comp.split()) > 3:
+                    for t, c in self.taxonomy.get_all_lookup_terms().items():
+                        if len(t) >= 3 and re.search(rf'\b{re.escape(t)}\b', comp.lower()):
+                            core_comp = c
+                            break
+
+                canon = self.taxonomy.resolve_canonical(core_comp) or core_comp
+                hit = self.exact_matcher.match_skill(core_comp, resume) or self.exact_matcher.match_skill(canon, resume)
+                if not hit and core_comp != comp:
+                    hit = self.exact_matcher.match_skill(comp, resume)
+                if not hit:
+                    fhit = self.fuzzy_matcher.match_skill(core_comp, resume, threshold=self.fuzzy_threshold)
+                    if fhit:
+                        hit = (fhit[0], "Fuzzy", fhit[2])
+                if not hit:
+                    sem_hits = self.semantic_matcher.find_top_k_semantic_matches(core_comp, resume, k=1, threshold=self.semantic_threshold)
+                    if sem_hits:
+                        hit = (sem_hits[0][0].text[:30], "Semantic", sem_hits[0][0])
+
+                if hit:
+                    term, mtype, sent = hit
+                    st = ContextualMatcher.evaluate_evidence_strength(sent)
+                    component_results[comp] = {"matched": True, "term": term, "method": mtype, "sentence": sent.text}
+                    matched_components.append(comp)
+                    component_sentences.append(sent)
+                    comp_strengths.append(st)
+                else:
+                    component_results[comp] = {"matched": False}
+                    missing_components.append(comp)
+
+            fulfillment = len(matched_components) / len(req.compound_components)
+            best_sentence = component_sentences[0] if component_sentences else (top_k_hits[0][0] if top_k_hits else None)
+            best_strength = comp_strengths[0] if comp_strengths else EvidenceStrength.NONE
+
+            if fulfillment == 1.0:
+                classification = MatchClassification.EXACT_MATCH
+                explanation = f"All {len(req.compound_components)} required components matched: {', '.join(matched_components)}."
+            elif fulfillment > 0.0:
+                classification = MatchClassification.PARTIAL_EVIDENCE
+                explanation = f"Partial fulfillment ({len(matched_components)}/{len(req.compound_components)}): Matched {', '.join(matched_components)}; missing: {', '.join(missing_components)}."
+            else:
+                classification = MatchClassification.NOT_FOUND
+                explanation = f"None of the {len(req.compound_components)} required components were found."
+
+            return RequirementMatchResult(
+                requirement_id=req.id,
+                requirement_text=req.text,
+                priority=req.priority.value,
+                classification=classification,
+                matched_term=", ".join(matched_components) if matched_components else None,
+                canonical_skill=req.canonical_skill,
+                evidence_sentence=best_sentence.text if best_sentence else None,
+                resume_section=best_sentence.section if best_sentence else None,
+                similarity_score=round(fulfillment, 3),
+                evidence_strength=best_strength,
+                matching_method=f"Compound ALL_OF ({len(matched_components)}/{len(req.compound_components)})",
+                explanation=explanation,
+                confidence=round(fulfillment * 0.95, 2),
+                weight=req.weight,
+                req_type=req.req_type.value,
+                matching_logic=req.matching_logic.value,
+                is_eligibility_condition=req.is_eligibility_condition,
+                fulfillment_ratio=fulfillment,
+                evidence_passages=evidence_passages,
+                component_matches=component_results
+            )
+
         target_skill = req.canonical_skill or (req.text if req.req_type == RequirementType.SKILL else None)
 
         # -------------------------------------------------------------
-        # Stage 1: Exact Match (Canonical & Alias)
+        # Stage 1: Exact Match (Canonical & Alias & ANY_OF Alternatives)
         # -------------------------------------------------------------
-        # Gather all skills mentioned in the requirement (e.g. "PyTorch or TensorFlow" -> ["PyTorch", "TensorFlow"])
         candidate_target_skills = []
         if target_skill:
             candidate_target_skills.append(target_skill)
+
+        # Include compound components for ANY_OF logic
+        if req.matching_logic == MatchingLogic.ANY_OF and req.compound_components:
+            for comp in req.compound_components:
+                canon = self.taxonomy.resolve_canonical(comp) or comp
+                if canon not in candidate_target_skills:
+                    candidate_target_skills.append(canon)
 
         # Detect any additional canonical skills mentioned in req.text
         if req.text:
@@ -107,13 +221,13 @@ class HybridMatchingEngine:
                 matched_term, match_type, sentence = exact_hit
                 strength = ContextualMatcher.evaluate_evidence_strength(sentence)
                 canonical = self.taxonomy.resolve_canonical(skill_to_check) or skill_to_check
-                
+
                 explanation = (
                     f"Direct {match_type.lower()} of '{matched_term}' located in {sentence.section.value} section."
                     if match_type == "Exact Canonical" else
                     f"Known alias '{matched_term}' of canonical skill '{canonical}' matched in {sentence.section.value} section."
                 )
-                
+
                 return RequirementMatchResult(
                     requirement_id=req.id,
                     requirement_text=req.text,
@@ -127,27 +241,70 @@ class HybridMatchingEngine:
                     evidence_strength=strength,
                     matching_method=match_type,
                     explanation=explanation,
-                    confidence=0.98 if strength in (EvidenceStrength.EXPERIENCE_EVIDENCE, EvidenceStrength.STRONG_IMPLEMENTATION) else 0.90
+                    confidence=0.98 if strength in (EvidenceStrength.EXPERIENCE_EVIDENCE, EvidenceStrength.STRONG_IMPLEMENTATION) else 0.90,
+                    weight=req.weight,
+                    req_type=req.req_type.value,
+                    matching_logic=req.matching_logic.value,
+                    is_eligibility_condition=req.is_eligibility_condition,
+                    fulfillment_ratio=1.0,
+                    evidence_passages=evidence_passages
                 )
+
+        # -------------------------------------------------------------
+        # Stage 1b: Accepted Equivalents Matching
+        # -------------------------------------------------------------
+        if req.accepted_equivalents:
+            for eq in req.accepted_equivalents:
+                eq_hit = self.exact_matcher.match_skill(eq, resume)
+                if not eq_hit:
+                    eq_canon = self.taxonomy.resolve_canonical(eq) or eq
+                    eq_hit = self.exact_matcher.match_skill(eq_canon, resume)
+                if eq_hit:
+                    matched_term, match_type, sentence = eq_hit
+                    strength = ContextualMatcher.evaluate_evidence_strength(sentence)
+                    return RequirementMatchResult(
+                        requirement_id=req.id,
+                        requirement_text=req.text,
+                        priority=req.priority.value,
+                        classification=MatchClassification.EXACT_MATCH,
+                        matched_term=matched_term,
+                        canonical_skill=eq,
+                        evidence_sentence=sentence.text,
+                        resume_section=sentence.section,
+                        similarity_score=0.95,
+                        evidence_strength=strength,
+                        matching_method="Accepted Equivalent",
+                        explanation=f"Candidate demonstrates accepted equivalent technology '{matched_term}' for '{req.text}'.",
+                        confidence=0.90,
+                        weight=req.weight,
+                        req_type=req.req_type.value,
+                        matching_logic=req.matching_logic.value,
+                        is_eligibility_condition=req.is_eligibility_condition,
+                        fulfillment_ratio=1.0,
+                        evidence_passages=evidence_passages
+                    )
 
         # -------------------------------------------------------------
         # Stage 2: Fuzzy Match (Spelling variations, typos)
         # -------------------------------------------------------------
-        if target_skill:
-            fuzzy_hit = self.fuzzy_matcher.match_skill(target_skill, resume, threshold=self.fuzzy_threshold)
+        skills_for_fuzzy = candidate_target_skills if candidate_target_skills else ([target_skill] if target_skill else [])
+        for skill_to_fuzzy in skills_for_fuzzy:
+            fuzzy_hit = self.fuzzy_matcher.match_skill(skill_to_fuzzy, resume, threshold=self.fuzzy_threshold)
             if fuzzy_hit:
                 matched_term, score, sentence = fuzzy_hit
                 strength = ContextualMatcher.evaluate_evidence_strength(sentence)
-                canonical = self.taxonomy.resolve_canonical(target_skill) or target_skill
+                canonical = self.taxonomy.resolve_canonical(skill_to_fuzzy) or skill_to_fuzzy
 
                 if score >= 90.0:
                     classification = MatchClassification.FUZZY_MATCH
                     conf = 0.85
-                    explanation = f"Fuzzy match '{matched_term}' ({score:.1f}% similarity) for '{target_skill}' in {sentence.section.value}."
+                    explanation = f"Fuzzy match '{matched_term}' ({score:.1f}% similarity) for '{skill_to_fuzzy}' in {sentence.section.value}."
+                    fulfillment = 1.0
                 else:
                     classification = MatchClassification.NEEDS_MANUAL_REVIEW
                     conf = 0.65
                     explanation = f"Borderline fuzzy match '{matched_term}' ({score:.1f}% similarity). Recommended for manual verification."
+                    fulfillment = 0.5
 
                 return RequirementMatchResult(
                     requirement_id=req.id,
@@ -162,13 +319,18 @@ class HybridMatchingEngine:
                     evidence_strength=strength,
                     matching_method="Fuzzy Matching",
                     explanation=explanation,
-                    confidence=conf
+                    confidence=conf,
+                    weight=req.weight,
+                    req_type=req.req_type.value,
+                    matching_logic=req.matching_logic.value,
+                    is_eligibility_condition=req.is_eligibility_condition,
+                    fulfillment_ratio=fulfillment,
+                    evidence_passages=evidence_passages
                 )
 
         # -------------------------------------------------------------
         # Stage 3: Semantic Matching against Resume Sentences
         # -------------------------------------------------------------
-        # Retrieve candidate matches above threshold to find the best domain-relevant hit
         candidates = []
         if precomputed_semantic_hit is not None:
             candidates.append(precomputed_semantic_hit)
@@ -191,7 +353,6 @@ class HybridMatchingEngine:
         if strong_hit:
             sem_sentence, sem_score = strong_hit
             # Check if this sentence actually describes a related but non-equivalent alternative skill
-            # (e.g. Angular when React was requested, or PostgreSQL when MySQL was requested)
             if target_skill:
                 alt_skill = self._find_competing_related_skill_in_sentence(target_skill, sem_sentence, req_text=req.text)
                 if alt_skill:
@@ -209,7 +370,13 @@ class HybridMatchingEngine:
                         evidence_strength=strength,
                         matching_method="Taxonomy Relationship (Alternative Skill Detected)",
                         explanation=f"High semantic similarity was triggered by '{alt_skill}', which is related to '{target_skill}' but not fully equivalent.",
-                        confidence=0.80
+                        confidence=0.80,
+                        weight=req.weight,
+                        req_type=req.req_type.value,
+                        matching_logic=req.matching_logic.value,
+                        is_eligibility_condition=req.is_eligibility_condition,
+                        fulfillment_ratio=0.0,
+                        evidence_passages=evidence_passages
                     )
 
             strength = ContextualMatcher.evaluate_evidence_strength(sem_sentence)
@@ -226,7 +393,13 @@ class HybridMatchingEngine:
                 evidence_strength=strength,
                 matching_method="Semantic Matching",
                 explanation=f"Strong semantic correspondence ({sem_score:.2f} cosine similarity) found in {sem_sentence.section.value}.",
-                confidence=min(0.92, round(sem_score * 0.95, 2))
+                confidence=min(0.92, round(sem_score * 0.95, 2)),
+                weight=req.weight,
+                req_type=req.req_type.value,
+                matching_logic=req.matching_logic.value,
+                is_eligibility_condition=req.is_eligibility_condition,
+                fulfillment_ratio=1.0,
+                evidence_passages=evidence_passages
             )
 
         # -------------------------------------------------------------
@@ -249,7 +422,13 @@ class HybridMatchingEngine:
                     evidence_strength=ContextualMatcher.evaluate_evidence_strength(rel_sentence),
                     matching_method=f"Taxonomy Relationship ({rel_type})",
                     explanation=f"Candidate possesses '{rel_skill}' which is {rel_type} to '{target_skill}', but not fully equivalent.",
-                    confidence=0.70
+                    confidence=0.70,
+                    weight=req.weight,
+                    req_type=req.req_type.value,
+                    matching_logic=req.matching_logic.value,
+                    is_eligibility_condition=req.is_eligibility_condition,
+                    fulfillment_ratio=0.0,
+                    evidence_passages=evidence_passages
                 )
 
         # -------------------------------------------------------------
@@ -278,7 +457,13 @@ class HybridMatchingEngine:
                 evidence_strength=strength,
                 matching_method="Semantic (Partial)",
                 explanation=f"Moderate semantic similarity ({sem_score:.2f}) indicates partial evidence, but lacks specific confirmation.",
-                confidence=round(sem_score * 0.8, 2)
+                confidence=round(sem_score * 0.8, 2),
+                weight=req.weight,
+                req_type=req.req_type.value,
+                matching_logic=req.matching_logic.value,
+                is_eligibility_condition=req.is_eligibility_condition,
+                fulfillment_ratio=0.3,
+                evidence_passages=evidence_passages
             )
 
         # -------------------------------------------------------------
@@ -296,8 +481,14 @@ class HybridMatchingEngine:
             similarity_score=0.0,
             evidence_strength=EvidenceStrength.NONE,
             matching_method="None",
-            explanation=f"No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-            confidence=0.95
+            explanation="No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+            confidence=0.95,
+            weight=req.weight,
+            req_type=req.req_type.value,
+            matching_logic=req.matching_logic.value,
+            is_eligibility_condition=req.is_eligibility_condition,
+            fulfillment_ratio=0.0,
+            evidence_passages=evidence_passages
         )
 
     def _find_competing_related_skill_in_sentence(
@@ -314,13 +505,10 @@ class HybridMatchingEngine:
 
         req_text_lower = req_text.lower() if req_text else ""
 
-        # Check alternative non-equivalent skills
         competing_types = (RelationshipType.RELATED_NOT_EQUIVALENT, RelationshipType.RELATED)
         for rel in entry.relationships:
             if rel.type in competing_types:
                 rel_canonical = self.taxonomy.resolve_canonical(rel.target) or rel.target
-                # If the requirement itself mentions this alternative skill (e.g. "PyTorch or TensorFlow"),
-                # then it is NOT a competing mismatch! The candidate fulfills the requirement.
                 if rel_canonical.lower() in req_text_lower:
                     continue
 
@@ -367,8 +555,7 @@ class HybridMatchingEngine:
     ) -> bool:
         """
         Validates that a candidate evidence sentence shares topical/domain relevance
-        with the target requirement to prevent generic linguistic false positives
-        (e.g., matching 'database indexing in PostgreSQL' to 'Natural Language Processing').
+        with the target requirement to prevent generic linguistic false positives.
         """
         if req.req_type == RequirementType.RESPONSIBILITY:
             return True
@@ -390,11 +577,9 @@ class HybridMatchingEngine:
         req_words = [w for w in re.findall(r'\b[a-z0-9+#.]+\b', req_text_clean) if len(w) >= 2 and w not in stopwords]
         sent_words = set(w for w in re.findall(r'\b[a-z0-9+#.]+\b', sent_text_clean) if len(w) >= 2 and w not in stopwords)
 
-        # 1. Direct lexical domain overlap
         if set(req_words) & sent_words:
             return True
 
-        # 2. Canonical skill & taxonomy alias / relationship check
         target_skill = req.canonical_skill
         if target_skill:
             entry = self.taxonomy.get_skill(target_skill)
@@ -414,16 +599,73 @@ class HybridMatchingEngine:
                             if rel_alias_norm and re.search(rf'\b{re.escape(rel_alias_norm)}\b', sent_text_clean):
                                 return True
 
-
-        # 3. Education / degree matching
         if req.req_type == RequirementType.EDUCATION or any(kw in req_text_clean for kw in ["degree", "bachelor", "master", "phd", "computer science"]):
             edu_keywords = {"bachelor", "master", "phd", "degree", "bs", "ms", "computer", "science", "engineering", "technology", "university", "college"}
             if (set(req_words) & edu_keywords) and (sent_words & edu_keywords):
                 return True
 
-        # If the requirement had no specific domain words, allow
         if len(req_words) <= 1 and not target_skill:
             return True
 
         return False
+
+    def _match_education_requirement(
+        self,
+        req: RequirementItem,
+        resume: ProcessedResume,
+        evidence_passages: List[Dict[str, Any]]
+    ) -> Optional[RequirementMatchResult]:
+        """
+        Directly checks candidate's education and degrees against educational requirements.
+        """
+        edu_sentences = resume.get_sentences_by_section(SectionType.EDUCATION) or []
+        sentences_to_search = edu_sentences if edu_sentences else resume.all_sentences
+        all_text = " ".join(s.text.lower() for s in sentences_to_search)
+
+        degree_keywords = [
+            "bachelor", "master", "ph.d", "phd", "doctorate", "bs", "ms", "b.s", "m.s",
+            "b.tech", "m.tech", "btech", "mtech", "b.e", "m.e", "degree", "diploma", "graduate"
+        ]
+        field_keywords = [
+            "computer science", "software engineering", "computer engineering",
+            "data science", "information technology", "engineering", "math", "physics", "related field"
+        ]
+
+        has_degree = any(re.search(rf'\b{re.escape(dk)}\b', all_text) for dk in degree_keywords)
+        has_field = any(fk in all_text for fk in field_keywords)
+
+        if has_degree:
+            best_sent = None
+            for s in sentences_to_search:
+                s_low = s.text.lower()
+                if any(re.search(rf'\b{re.escape(dk)}\b', s_low) for dk in degree_keywords):
+                    if any(fk in s_low for fk in field_keywords):
+                        best_sent = s
+                        break
+                    elif not best_sent:
+                        best_sent = s
+
+            matched_text = best_sent.text if best_sent else "Verified Degree"
+            return RequirementMatchResult(
+                requirement_id=req.id,
+                requirement_text=req.text,
+                priority=req.priority.value,
+                classification=MatchClassification.EXACT_MATCH,
+                matched_term=matched_text,
+                canonical_skill="Education",
+                evidence_sentence=best_sent.text if best_sent else None,
+                resume_section=best_sent.section if best_sent else SectionType.EDUCATION,
+                similarity_score=1.0,
+                evidence_strength=EvidenceStrength.EXPERIENCE_EVIDENCE,
+                matching_method="Education Verification",
+                explanation=f"Candidate satisfies education requirement with: '{matched_text}'.",
+                confidence=0.98,
+                weight=req.weight,
+                req_type="Education",
+                matching_logic=req.matching_logic.value,
+                is_eligibility_condition=req.is_eligibility_condition,
+                fulfillment_ratio=1.0,
+                evidence_passages=evidence_passages
+            )
+        return None
 

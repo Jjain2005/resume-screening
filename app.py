@@ -8,7 +8,13 @@ from modules.knowledge_base.taxonomy import SkillTaxonomy
 from modules.resume_processing.extractor import ResumeExtractor
 from modules.resume_processing.models import ProcessedResume, SectionType
 from modules.jd_processing.parser import JobDescriptionParser
-from modules.jd_processing.models import JobDescription, RequirementItem, RequirementType, RequirementPriority
+from modules.jd_processing.models import (
+    JobDescription,
+    RequirementItem,
+    RequirementType,
+    RequirementPriority,
+    MatchingLogic
+)
 from modules.matching_engine.hybrid_engine import HybridMatchingEngine
 from modules.matching_engine.models import MatchClassification, EvidenceStrength
 from modules.scoring.evaluator import CandidateEvaluator, ScoringWeights, Recommendation
@@ -22,7 +28,7 @@ TEST_RESUMES_DIR = os.path.join(BASE_DIR, "data", "test_resumes")
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 
 st.set_page_config(
-    page_title="Resume Screening System",
+    page_title="Intelligent Resume Screening",
     page_icon="📄",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -41,7 +47,7 @@ def normalize_recommendation(rec_val: Any) -> str:
         rec_str = str(rec_val.value)
     else:
         rec_str = str(rec_val)
-    
+
     rec_lower = rec_str.lower()
     if "selection" in rec_lower or "interview" in rec_lower or "strongly" in rec_lower:
         return REC_SELECTION
@@ -61,7 +67,6 @@ def load_heavy_engines():
 
 taxonomy, matching_engine = load_heavy_engines()
 resume_extractor = ResumeExtractor()
-jd_parser = JobDescriptionParser(taxonomy)
 
 # -------------------------------------------------------------
 # Session State Initialization
@@ -89,62 +94,14 @@ if "comparison_df" not in st.session_state:
 # -------------------------------------------------------------
 with st.sidebar:
     st.title("⚙️ Engine Settings")
-    st.caption("Adjust candidate scoring profile and weights.")
+    st.caption("Universal evaluation engine: criteria and weights depend dynamically on the uploaded Job Description.")
 
-    role_mode = st.radio(
-        "🎯 Hiring Role Profile",
-        options=[
-            "🎓 Intern / Fresher (0% Experience Weight — Skills & Projects Focus)",
-            "💼 Experienced Professional (Balanced 5-Factor Scoring)"
-        ],
-        index=0,
-        help="Intern mode gives 0% weight to working years, evaluating candidates purely on essential skills, project depth, and practical code demonstration."
-    )
-
-    is_intern = "Intern" in role_mode
-    default_w_ess = 0.25 if is_intern else 0.30
-    default_w_llm = 0.30 if is_intern else 0.20
-    default_w_prac = 0.20 if is_intern else 0.15
-    default_w_proj = 0.15 if is_intern else 0.10
-    default_w_pref = 0.10 if is_intern else 0.10
-    default_w_exp = 0.00 if is_intern else 0.15
-
-    with st.expander("Scoring Weights (Tunable)", expanded=True):
-        st.caption(f"Active Profile: **{'🎓 Intern / Fresher' if is_intern else '💼 Experienced'}**")
-        w_ess = st.slider("Essential Skills Weight", 0.05, 0.70, default_w_ess, 0.05, key=f"w_ess_{is_intern}")
-        w_llm = st.slider(
-            "Groq AI Assessment Weight",
-            0.0, 0.60, default_w_llm, 0.05,
-            key=f"w_llm_{is_intern}",
-            help="Holistic LLM qualitative score evaluating candidate depth and contextual evidence."
-        )
-        w_prac = st.slider("Practical Evidence Weight", 0.0, 0.50, default_w_prac, 0.05, key=f"w_prac_{is_intern}")
-        w_proj = st.slider("Project Implementation Depth", 0.0, 0.40, default_w_proj, 0.05, key=f"w_proj_{is_intern}")
-        w_pref = st.slider("Preferred Skills Weight", 0.0, 0.40, default_w_pref, 0.05, key=f"w_pref_{is_intern}")
-        w_exp = st.slider(
-            "Relevant Experience Duration",
-            0.0, 0.40, default_w_exp, 0.05,
-            key=f"w_exp_{is_intern}",
-            help="Set to 0.0 for interns/freshers where working years do not apply."
-        )
-
-        total_weight = w_ess + w_llm + w_prac + w_proj + w_pref + w_exp
-        if abs(total_weight - 1.0) > 0.02:
-            st.warning(f"Weights sum to {total_weight:.2f} (Recommended: 1.00)")
-        else:
-            st.success("Weights normalized to 1.00")
-
-    with st.expander("Matching Thresholds", expanded=False):
-        fuzzy_th = st.slider("Fuzzy Match Threshold (%)", 70, 95, 85, 1)
-        sem_th = st.slider("Semantic Match Threshold (Cosine)", 0.55, 0.85, 0.70, 0.02)
-        sem_part_th = st.slider("Partial Semantic Threshold", 0.40, 0.65, 0.52, 0.02)
-
-    with st.expander("🤖 Groq AI Evaluation (Optional)", expanded=True):
+    with st.expander("🤖 Groq AI Analysis (Optional)", expanded=True):
         groq_manager = GroqClientManager()
         use_groq = st.toggle(
-            "Enable Groq Deep Analysis",
+            "Enable Groq AI",
             value=groq_manager.is_available,
-            help="Enables LLM qualitative evaluation of project context, internships, candidate strengths, and gaps without hallucination."
+            help="Uses Groq LLM to deeply parse Job Descriptions and perform evidence-grounded requirement evaluation validated by Python."
         )
         groq_api_key_input = st.text_input(
             "Groq API Key",
@@ -170,15 +127,10 @@ with st.sidebar:
 
         groq_evaluator = GroqContextualEvaluator(groq_manager)
 
-    scoring_weights = ScoringWeights(
-        essential_skills_weight=w_ess / max(total_weight, 0.001),
-        preferred_skills_weight=w_pref / max(total_weight, 0.001),
-        practical_evidence_weight=w_prac / max(total_weight, 0.001),
-        relevant_experience_weight=w_exp / max(total_weight, 0.001),
-        project_depth_weight=w_proj / max(total_weight, 0.001),
-        llm_evaluation_weight=w_llm / max(total_weight, 0.001)
-    )
-    evaluator = CandidateEvaluator(scoring_weights)
+    with st.expander("Matching Thresholds", expanded=False):
+        fuzzy_th = st.slider("Fuzzy Match Threshold (%)", 70, 95, 85, 1)
+        sem_th = st.slider("Semantic Match Threshold (Cosine)", 0.55, 0.85, 0.76, 0.02)
+        sem_part_th = st.slider("Partial Semantic Threshold", 0.40, 0.65, 0.65, 0.02)
 
     st.markdown("---")
     st.markdown("### 📚 Knowledge Base Info")
@@ -188,14 +140,17 @@ with st.sidebar:
     if taxonomy.unknown_skills:
         st.caption(f"Flagged {len(taxonomy.unknown_skills)} unknown terms for review.")
 
+jd_parser = JobDescriptionParser(taxonomy, groq_manager=groq_manager if use_groq else None)
+evaluator = CandidateEvaluator()
+
 # -------------------------------------------------------------
 # Main Navigation Tabs (3 Core Workflow Sections)
 # -------------------------------------------------------------
-st.title("Intelligent Resume Screening Prototype")
-st.markdown("Explainable, evidence-grounded candidate matching against Job Descriptions.")
+st.title("Universal Intelligent Resume Screening")
+st.markdown("Dynamic Job Description-driven candidate evaluation with evidence grounding and explainable scoring.")
 
 tab_jd, tab_screening, tab_reports = st.tabs([
-    "1. Job Description & Requirements",
+    "1. Job Description & Criteria",
     "2. Resume Screening & Processing",
     "3. Candidate Comparison & Reports"
 ])
@@ -205,15 +160,15 @@ tab_jd, tab_screening, tab_reports = st.tabs([
 # =============================================================
 with tab_jd:
     st.header("Step 1: Define & Confirm Job Description")
-    st.markdown("Enter your **Job Position Title** and **Job Description**. You can paste text or upload a document.")
+    st.markdown("Enter your **Job Position Title** and **Job Description**. Evaluation criteria and relative weights will be dynamically generated.")
 
-    # Optional quick template loader (collapsed so it doesn't get in the way of custom JDs)
     with st.expander("💡 Optional: Load a Pre-defined Sample JD Template", expanded=False):
         sample_options = [
             "-- Select to populate --",
             "Senior AI & Machine Learning Engineer",
             "Senior Backend & DevOps Engineer",
             "Frontend Web Developer",
+            "Junior Data Science Intern (Skills & Projects Only)",
             "Growth Marketing & Sales Specialist"
         ]
         sample_pick = st.selectbox("Sample Roles", sample_options, index=0)
@@ -258,6 +213,21 @@ Preferred:
 Preferred:
 • Experience working with Agile Scrum methodologies and JIRA
 • Familiarity with Webpack or Vite"""
+            elif sample_pick == "Junior Data Science Intern (Skills & Projects Only)":
+                st.session_state.custom_jd_title = "Data Science Intern"
+                st.session_state.custom_jd_text = """About the Role:
+Looking for an enthusiastic Data Science Intern to work on predictive models and exploratory data analysis.
+
+Requirements:
+• Hands-on programming proficiency in Python
+• Experience with Pandas and NumPy for data manipulation
+• Applied Machine Learning projects using Scikit-Learn
+• Data visualization with Matplotlib or Seaborn
+• SQL fundamentals
+
+Nice to Have:
+• Familiarity with Git version control
+• Jupyter Notebook experimentation"""
             elif sample_pick == "Growth Marketing & Sales Specialist":
                 st.session_state.custom_jd_title = "Growth Marketing & Sales Specialist"
                 st.session_state.custom_jd_text = """Requirements:
@@ -270,20 +240,18 @@ Preferred:
 • Content marketing strategy
 • Analytics tracking and conversion rate optimization"""
 
-    # 1. Job Title Input
     col_t1, col_t2 = st.columns([2, 1])
     with col_t1:
         job_title_input = st.text_input(
             "📌 Job Position / Title",
             value=st.session_state.custom_jd_title,
-            placeholder="e.g. Senior Machine Learning Engineer, Marketing Lead, Accountant",
+            placeholder="e.g. Senior Machine Learning Engineer, Marketing Lead, Data Science Intern",
             help="Enter the exact job title for this screening session."
         )
     with col_t2:
         if st.session_state.confirmed_jd:
-            st.success(f"Active Confirmed Role: **{st.session_state.confirmed_jd.title}**")
+            st.success(f"Active Role: **{st.session_state.confirmed_jd.title}** ({len(st.session_state.confirmed_jd.requirements)} criteria)")
 
-    # 2. JD Text or File Upload
     input_method = st.radio("Choose Input Method", ["Type / Paste Job Description", "Upload Job Description File (PDF/TXT)"], horizontal=True)
 
     if input_method == "Type / Paste Job Description":
@@ -291,7 +259,7 @@ Preferred:
             "Job Description Content",
             value=st.session_state.custom_jd_text,
             height=240,
-            placeholder="Paste your Job Description here...\n\nExample:\nRequirements:\n• 3+ years experience with Python and SQL\n• Experience with Docker and APIs\n\nPreferred:\n• Familiarity with AWS and CI/CD"
+            placeholder="Paste your Job Description here..."
         )
     else:
         uploaded_jd = st.file_uploader("Upload Job Description (PDF or TXT)", type=["pdf", "txt"])
@@ -308,7 +276,7 @@ Preferred:
 
     col_btn1, col_btn2 = st.columns([1, 3])
     with col_btn1:
-        extract_clicked = st.button("🔍 Extract Requirements", type="primary")
+        extract_clicked = st.button("🔍 Analyze JD & Generate Criteria", type="primary")
 
     if extract_clicked:
         if not jd_body_text.strip():
@@ -318,89 +286,93 @@ Preferred:
             st.session_state.custom_jd_title = active_title
             st.session_state.custom_jd_text = jd_body_text
 
-            parsed_jd = jd_parser.parse(
-                jd_body_text,
-                jd_id="custom_jd",
-                default_title=active_title
-            )
-            st.session_state.extracted_requirements = [r.to_dict() for r in parsed_jd.requirements]
-            st.success(f"Extracted {len(parsed_jd.requirements)} requirements for position: '{active_title}'")
-
-    # 3. HR Review, Edit & Add Requirements
-    if st.session_state.extracted_requirements:
-        st.markdown("---")
-        st.subheader("📋 Structured Requirements (Review & Edit)")
-        st.info("You can edit priorities, add new requirements, or delete rows before confirming.")
-
-        # Manual Requirement Adder
-        with st.expander("➕ Add New Custom Requirement", expanded=False):
-            c_add1, c_add2, c_add3, c_add4 = st.columns([3, 1, 1, 1])
-            with c_add1:
-                new_req_text = st.text_input("Requirement Text", placeholder="e.g. 3+ years experience with Kubernetes clusters")
-            with c_add2:
-                new_req_prio = st.selectbox("Priority", ["Required", "Preferred"])
-            with c_add3:
-                new_req_type = st.selectbox("Type", ["Skill", "Experience", "Education", "Certification", "Responsibility"])
-            with c_add4:
-                st.write("")
-                st.write("")
-                if st.button("Add to List"):
-                    if new_req_text.strip():
-                        canon = taxonomy.resolve_canonical(new_req_text.strip())
-                        new_item = {
-                            "id": f"req_custom_{len(st.session_state.extracted_requirements)+1}",
-                            "text": new_req_text.strip(),
-                            "priority": new_req_prio,
-                            "req_type": new_req_type,
-                            "canonical_skill": canon,
-                            "weight": 1.5 if new_req_prio == "Required" else 1.0
-                        }
-                        st.session_state.extracted_requirements.append(new_item)
-                        st.rerun()
-
-        req_df = pd.DataFrame(st.session_state.extracted_requirements)
-        edited_df = st.data_editor(
-            req_df[["id", "priority", "req_type", "canonical_skill", "text"]],
-            column_config={
-                "id": st.column_config.TextColumn("ID", disabled=True),
-                "priority": st.column_config.SelectboxColumn("Priority", options=["Required", "Preferred"], required=True),
-                "req_type": st.column_config.SelectboxColumn("Type", options=["Skill", "Experience", "Education", "Certification", "Responsibility"]),
-                "canonical_skill": st.column_config.TextColumn("Mapped Skill (Taxonomy)"),
-                "text": st.column_config.TextColumn("Requirement Description", width="large")
-            },
-            num_rows="dynamic",
-            width="stretch",
-            key="req_editor"
-        )
-
-        st.markdown("")
-        col_conf1, col_conf2 = st.columns([2, 3])
-        with col_conf1:
-            if st.button("✅ Confirm Job Description for Screening", type="primary"):
-                active_title = job_title_input.strip() if job_title_input.strip() else "Job Position"
-                confirmed_reqs = []
-                for _, row in edited_df.iterrows():
-                    item = RequirementItem(
-                        id=str(row["id"]),
-                        text=str(row["text"]),
-                        req_type=RequirementType(row["req_type"]),
-                        priority=RequirementPriority(row["priority"]),
-                        canonical_skill=str(row["canonical_skill"]) if pd.notna(row["canonical_skill"]) and str(row["canonical_skill"]).strip() else None,
-                        weight=1.5 if row["priority"] == "Required" else 1.0
-                    )
-                    confirmed_reqs.append(item)
-
-                st.session_state.confirmed_jd = JobDescription(
-                    id="confirmed_jd",
-                    title=active_title,
-                    raw_text=jd_body_text,
-                    requirements=confirmed_reqs
+            with st.spinner("Analyzing Job Description and dynamically constructing evaluation strategy..."):
+                if use_groq and groq_manager.is_available:
+                    if hasattr(groq_evaluator, "tracker"):
+                        groq_evaluator.tracker.record_jd_analysis_call()
+                parsed_jd = jd_parser.parse(
+                    jd_body_text,
+                    jd_id="custom_jd",
+                    default_title=active_title,
+                    use_llm=use_groq
                 )
-                st.session_state.screening_reports = []  # Clear previous screening on new JD
-                st.success(f"🎉 Job Description '{active_title}' confirmed with {len(confirmed_reqs)} requirements! Go to Step 2 to screen resumes.")
+                st.session_state.confirmed_jd = parsed_jd
+                st.session_state.extracted_requirements = [r.to_dict() for r in parsed_jd.requirements]
+                st.session_state.screening_reports = []
+                st.success(f"Generated {len(parsed_jd.requirements)} criteria with dynamic weights for '{parsed_jd.title}'!")
 
-        if st.session_state.confirmed_jd:
-            st.success(f"✔️ Active Confirmed Position: **{st.session_state.confirmed_jd.title}** ({len(st.session_state.confirmed_jd.requirements)} criteria confirmed)")
+    # Display Dynamic Evaluation Strategy Matrix
+    if st.session_state.confirmed_jd:
+        active_jd = st.session_state.confirmed_jd
+        st.markdown("---")
+
+        # ── Shared Evaluation Strategy Card (Reused across all candidates) ──
+        strategy = getattr(active_jd, "evaluation_strategy", None)
+        if strategy:
+            with st.container(border=True):
+                st.subheader(f"🎯 Shared JD Evaluation Strategy: {strategy.job_domain}")
+                st.caption("Generated once and reused across every candidate evaluation for 1-to-many screening consistency.")
+                if strategy.role_summary:
+                    st.info(f"**Mission & Role Summary:** {strategy.role_summary}")
+                s_c1, s_c2 = st.columns(2)
+                with s_c1:
+                    st.markdown("**Essential Practical Capabilities:**")
+                    for cap in strategy.essential_capabilities:
+                        st.markdown(f"- {cap}")
+                    st.markdown("**Relevant Core Skills:**")
+                    st.markdown(", ".join([f"`{s}`" for s in strategy.relevant_skills]) if strategy.relevant_skills else "—")
+                with s_c2:
+                    st.markdown("**Expected Practical Implementations:**")
+                    for ep in strategy.expected_practical_knowledge:
+                        st.markdown(f"- {ep}")
+                    st.markdown("**Desirable Qualifications & Extras:**")
+                    for dq in strategy.desirable_qualifications:
+                        st.markdown(f"- {dq}")
+
+        st.subheader("📋 Dynamic Evaluation Strategy Matrix")
+        st.caption("Criteria and weights are automatically generated from the Job Description. Python validates and normalizes all weights.")
+
+        # Matrix metrics
+        matrix_val = active_jd.validate_matrix()
+        m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns(5)
+        m_col1.metric("Total Criteria", matrix_val["total_requirements"])
+        m_col2.metric("Mandatory", matrix_val["mandatory_count"])
+        m_col3.metric("Preferred", matrix_val["preferred_count"])
+        m_col4.metric("Optional", matrix_val["optional_count"])
+        has_exp = matrix_val["has_experience_requirement"]
+        m_col5.metric("Min Experience", "Specified in JD" if has_exp else "None Required")
+
+        # Table display
+        matrix_rows = []
+        for r in active_jd.requirements:
+            logic_badge = r.matching_logic.value
+            if r.compound_components:
+                logic_badge += f" ({', '.join(r.compound_components)})"
+            matrix_rows.append({
+                "ID": r.id,
+                "Priority": r.priority.value,
+                "Type": r.req_type.value,
+                "Logic": logic_badge,
+                "Dynamic Weight (%)": f"{r.weight * 100:.1f}%",
+                "Requirement": r.text,
+                "Accepted Equivalents": ", ".join(r.accepted_equivalents) if r.accepted_equivalents else "—"
+            })
+
+        st.dataframe(
+            pd.DataFrame(matrix_rows),
+            column_config={
+                "ID": st.column_config.TextColumn("ID", width="small"),
+                "Priority": st.column_config.TextColumn("Priority", width="small"),
+                "Type": st.column_config.TextColumn("Type", width="small"),
+                "Logic": st.column_config.TextColumn("Logic", width="medium"),
+                "Dynamic Weight (%)": st.column_config.TextColumn("Weight", width="small"),
+                "Requirement": st.column_config.TextColumn("Requirement Description", width="large"),
+                "Accepted Equivalents": st.column_config.TextColumn("Equivalents", width="medium")
+            },
+            hide_index=True,
+            width="stretch"
+        )
+        st.success("✔️ Ready for screening! Proceed to Step 2 to upload resumes.")
 
 # =============================================================
 # SECTION 2: RESUME SCREENING
@@ -409,12 +381,12 @@ with tab_screening:
     st.header("Step 2: Upload Resumes & Run Screening")
 
     if not st.session_state.confirmed_jd:
-        st.warning("⚠️ Please confirm a Job Description in Step 1 first.")
+        st.warning("⚠️ Please define and confirm a Job Description in Step 1 first.")
     else:
-        st.info(f"Target Position: **{st.session_state.confirmed_jd.title}** ({len(st.session_state.confirmed_jd.requirements)} requirements confirmed)")
+        st.info(f"Target Position: **{st.session_state.confirmed_jd.title}** ({len(st.session_state.confirmed_jd.requirements)} criteria)")
 
         st.markdown("### 📤 Upload Candidate Resumes")
-        st.caption("Upload multiple PDF resumes to screen against the confirmed Job Description.")
+        st.caption("Upload PDF resumes to screen against the confirmed Job Description.")
 
         uploaded_files = st.file_uploader(
             "Drop or select PDF resumes",
@@ -423,13 +395,11 @@ with tab_screening:
             help="Select one or multiple PDF resumes from your computer."
         )
 
-        # Show uploaded resume files summary
         if uploaded_files:
-            st.success(f"Selected **{len(uploaded_files)}** candidate resume(s) for screening:")
+            st.success(f"Selected **{len(uploaded_files)}** candidate resume(s):")
             files_summary = [{"Filename": f.name, "File Size (KB)": round(f.size / 1024, 1)} for f in uploaded_files]
             st.dataframe(pd.DataFrame(files_summary), width="stretch")
 
-        # Optional collapsed expander only if user explicitly wants pre-packaged test resumes
         with st.expander("Optional: Include Pre-Packaged Synthetic Test Resumes", expanded=False):
             if os.path.exists(TEST_RESUMES_DIR):
                 test_files = [f for f in os.listdir(TEST_RESUMES_DIR) if f.endswith(".pdf")]
@@ -438,15 +408,13 @@ with tab_screening:
                 selected_samples = []
 
         st.markdown("")
-        if st.button("🚀 Start Screening Resumes", type="primary"):
+        if st.button("🚀 Start Universal Screening", type="primary"):
             resumes_to_process = []
 
-            # 1. User uploaded files
             if uploaded_files:
                 for f in uploaded_files:
                     resumes_to_process.append((f.name, f))
 
-            # 2. Selected sample files (if any were chosen)
             if selected_samples:
                 for fname in selected_samples:
                     fpath = os.path.join(TEST_RESUMES_DIR, fname)
@@ -458,58 +426,57 @@ with tab_screening:
                 progress_bar = st.progress(0.0)
                 status_box = st.empty()
 
-                # Fast caching: precompute JD embeddings once for the entire screening batch
                 matching_engine.cache_jd(st.session_state.confirmed_jd)
-                groq_evaluator.reset_call_counter()
 
-                reports = []
+                # Phase 1: Extract and pre-match all resumes deterministically
+                candidate_preps = []
                 for idx, (fname, f_obj) in enumerate(resumes_to_process):
-                    status_box.markdown(f"**Screening ({idx+1}/{len(resumes_to_process)}):** `{fname}`...")
-
-                    # 1. Extract PDF Text, Validate Confidence & Parse Timeline
+                    status_box.markdown(f"**Extracting & Pre-matching ({idx+1}/{len(resumes_to_process)}):** `{fname}`...")
                     proc_resume = resume_extractor.extract_from_pdf(f_obj, filename=fname)
 
-                    # 2. Run Vectorized Hybrid Matching Engine
                     matching_engine.fuzzy_threshold = fuzzy_th
                     matching_engine.semantic_threshold = sem_th
                     matching_engine.semantic_partial_threshold = sem_part_th
                     matches = matching_engine.match_resume_to_jd(proc_resume, st.session_state.confirmed_jd)
 
-                    # 3. Evaluate & Score (5-factor scoring + tenure + extraction safeguarding)
                     eval_result = evaluator.evaluate(
                         matches,
                         resume=proc_resume,
                         jd=st.session_state.confirmed_jd
                     )
+                    candidate_preps.append((proc_resume, matches, eval_result))
+                    progress_bar.progress((idx + 1) / (len(resumes_to_process) * 2))
 
-                    # 3b. Optional Groq Contextual Evaluation (Integrated into Matrix with 30% Weight)
-                    llm_eval = None
-                    if use_groq and groq_manager.is_available:
-                        with st.spinner(f"Running Groq AI contextual analysis for {fname}..."):
-                            llm_eval = groq_evaluator.evaluate_candidate(
-                                jd=st.session_state.confirmed_jd,
-                                resume=proc_resume,
-                                deterministic_matches=matches,
-                                deterministic_eval=eval_result
-                            )
-                            if llm_eval and llm_eval.get("llm_applied"):
-                                # Re-calculate candidate evaluation with Groq LLM integrated into the 30% matrix!
-                                eval_result = evaluator.evaluate(
-                                    matches,
-                                    resume=proc_resume,
-                                    jd=st.session_state.confirmed_jd,
-                                    llm_score=llm_eval.get("overall_score"),
-                                    llm_recommendation=llm_eval.get("llm_suggested_recommendation"),
-                                    llm_synthesis=llm_eval.get("executive_summary")
-                                )
+                # Phase 2: Independent candidate evaluations
+                reports = []
+                if use_groq and groq_manager.is_available:
+                    status_box.markdown(f"**Running Independent LLM Evaluations ({len(candidate_preps)} candidate(s), controlled concurrency)...**")
+                    def _on_cand_done(done, total, c_fname):
+                        status_box.markdown(f"**AI Screening ({done}/{total}):** Completed `{c_fname}`")
+                        progress_bar.progress(0.5 + ((done / max(1, total)) * 0.5))
 
-                    # 4. Generate Report
-                    rep = ScreeningReportGenerator.generate_candidate_report(
-                        proc_resume, eval_result, matches, st.session_state.confirmed_jd, llm_evaluation=llm_eval
+                    batch_results = groq_evaluator.evaluate_candidates_batch(
+                        jd=st.session_state.confirmed_jd,
+                        candidates=candidate_preps,
+                        max_workers=2,
+                        progress_callback=_on_cand_done
                     )
-                    rep["evaluation_summary"]["recommendation"] = normalize_recommendation(rep["evaluation_summary"]["recommendation"])
-                    reports.append(rep)
-                    progress_bar.progress((idx + 1) / len(resumes_to_process))
+
+                    for i, (proc_resume, final_eval, llm_eval) in enumerate(batch_results):
+                        matches = candidate_preps[i][1]
+                        rep = ScreeningReportGenerator.generate_candidate_report(
+                            proc_resume, final_eval, matches, st.session_state.confirmed_jd, llm_evaluation=llm_eval
+                        )
+                        rep["evaluation_summary"]["recommendation"] = normalize_recommendation(rep["evaluation_summary"]["recommendation"])
+                        reports.append(rep)
+                else:
+                    for proc_resume, matches, eval_result in candidate_preps:
+                        rep = ScreeningReportGenerator.generate_candidate_report(
+                            proc_resume, eval_result, matches, st.session_state.confirmed_jd, llm_evaluation=None
+                        )
+                        rep["evaluation_summary"]["recommendation"] = normalize_recommendation(rep["evaluation_summary"]["recommendation"])
+                        reports.append(rep)
+                    progress_bar.progress(1.0)
 
                 st.session_state.screening_reports = reports
                 comparison_df = ScreeningReportGenerator.generate_comparison_dataframe(reports)
@@ -519,8 +486,8 @@ with tab_screening:
 
                 call_stats = groq_evaluator.get_call_stats(len(reports))
                 st.session_state.groq_call_stats = call_stats
-                llm_note = f" (Groq API Calls: {call_stats['total_calls']} | Avg: {call_stats['average_calls_per_candidate']}/cand)" if use_groq and groq_manager.is_available else ""
-                status_box.success(f"🎉 Successfully screened {len(reports)} candidate(s){llm_note}! View detailed results in Step 3.")
+                llm_note = f" (Groq Total API Calls: {call_stats['total_calls']} | Cache Hits: {call_stats['cache_hits']})" if use_groq and groq_manager.is_available else ""
+                status_box.success(f"🎉 Successfully screened {len(reports)} candidate(s){llm_note}! View results in Step 3.")
 
 # =============================================================
 # SECTION 3: CANDIDATE COMPARISON & REPORTS
@@ -529,37 +496,43 @@ with tab_reports:
     st.header("Step 3: Candidate Comparison & Explainable Reports")
 
     if not st.session_state.screening_reports:
-        st.info("No candidates screened yet. Upload your resumes and click 'Start Screening' in Step 2.")
+        st.info("No candidates screened yet. Upload your resumes and click 'Start Universal Screening' in Step 2.")
     else:
         reports = st.session_state.screening_reports
         df = st.session_state.comparison_df
 
-        # Ensure all reports use the 3 standard recommendation categories
         for r in reports:
             r["evaluation_summary"]["recommendation"] = normalize_recommendation(r["evaluation_summary"].get("recommendation", ""))
 
         if not df.empty and "Recommendation" in df.columns:
             df["Recommendation"] = df["Recommendation"].apply(normalize_recommendation)
 
-        # Top Executive Summary Metrics
+        # ── API Usage & Reliability Visibility Card ────────────────────────
         call_stats = st.session_state.get("groq_call_stats")
-        if call_stats and call_stats.get("total_calls", 0) > 0:
-            rec_col1, rec_col2, rec_col3, rec_col4 = st.columns(4)
-            rec_col4.metric("🤖 Groq API Calls", f"{call_stats['total_calls']} (Avg {call_stats['average_calls_per_candidate']}/cand)")
-        else:
-            rec_col1, rec_col2, rec_col3 = st.columns(3)
+        if call_stats:
+            with st.container(border=True):
+                st.subheader("⚡ Groq API Usage & Reliability Visibility")
+                st.caption("Live monitoring of API calls, individual resume evaluations, cache hits, retries, and errors.")
+                u1, u2, u3, u4, u5, u6, u7 = st.columns(7)
+                u1.metric("🔍 JD Analysis", call_stats.get("jd_analysis_calls", 0))
+                u2.metric("📄 Resume Calls", call_stats.get("resume_eval_calls", 0))
+                u3.metric("✅ Success", call_stats.get("successful_evaluations", 0))
+                u4.metric("❌ Failures", call_stats.get("failed_evaluations", 0))
+                u5.metric("🔄 Retries", call_stats.get("retry_count", 0))
+                u6.metric("⚡ Cache Hits", call_stats.get("cache_hits", 0))
+                u7.metric("📊 Total API Usage", call_stats.get("total_calls", 0))
 
         sel_count = sum(1 for r in reports if r["evaluation_summary"]["recommendation"] == REC_SELECTION)
         rev_count = sum(1 for r in reports if r["evaluation_summary"]["recommendation"] == REC_MANUAL_REVIEW)
         not_count = sum(1 for r in reports if r["evaluation_summary"]["recommendation"] == REC_NOT_RECOMMENDED)
 
+        rec_col1, rec_col2, rec_col3 = st.columns(3)
         rec_col1.metric("🟢 Recommended for Selection", f"{sel_count} candidates")
         rec_col2.metric("🟡 Manual Review Required", f"{rev_count} candidates")
         rec_col3.metric("🔴 Not Recommended", f"{not_count} candidates")
 
         st.subheader("📊 Candidate Comparison Overview")
 
-        # Build prominent comparison table with Selection Status up front
         table_rows = []
         for r in reports:
             ev = r["evaluation_summary"]
@@ -574,10 +547,7 @@ with tab_reports:
                 badge = "🔴 Not Recommended"
 
             tenure_val = exp.get("verified_years", ev.get("verified_tenure_years", 0.0))
-            if scoring_weights.relevant_experience_weight <= 0.01:
-                tenure_display = "0% Weight (Intern Mode)"
-            else:
-                tenure_display = f"{tenure_val:.1f} yrs"
+            tenure_display = f"{tenure_val:.1f} yrs" if tenure_val > 0 else "0.0 yrs"
 
             llm_sc = ev.get("llm_score")
             llm_sc_str = f"{llm_sc:.1f}" if llm_sc is not None else "N/A"
@@ -587,14 +557,14 @@ with tab_reports:
                 "Selection Status": badge,
                 "Candidate Name": r["candidate_name"],
                 "Final Score": ev["overall_score"],
-                "Groq LLM (30%)": llm_sc_str,
-                "LLM Suggestion": llm_sugg_str,
-                "Essential (25%)": f"{ev.get('essential_coverage_pct', 0.0):.1f}%",
-                "Practical (20%)": f"{ev.get('practical_evidence_score', 0.0):.1f}%",
-                "Projects (15%)": f"{ev.get('project_depth_score', 0.0):.1f}%",
-                "Preferred (10%)": f"{ev.get('preferred_coverage_pct', 0.0):.1f}%",
+                "Mandatory Coverage": f"{ev.get('essential_coverage_pct', 0.0):.1f}%",
+                "Practical Depth": f"{ev.get('practical_evidence_score', 0.0):.1f}%",
+                "Project Depth": f"{ev.get('project_depth_score', 0.0):.1f}%",
+                "Preferred Coverage": f"{ev.get('preferred_coverage_pct', 0.0):.1f}%",
+                "Verified Tenure": tenure_display,
+                "AI Validated Assessment": llm_sc_str,
                 "Decision Reason": ev.get("decision_rationale", ""),
-                "Extraction Conf": f"{int(proc.get('extraction_confidence', 1.0) * 100)}%",
+                "Conf": f"{int(proc.get('extraction_confidence', 1.0) * 100)}%",
                 "Filename": r["filename"]
             })
 
@@ -608,14 +578,14 @@ with tab_reports:
                 "Selection Status": st.column_config.TextColumn("Selection Status", width="medium"),
                 "Candidate Name": st.column_config.TextColumn("Candidate Name", width="medium"),
                 "Final Score": st.column_config.ProgressColumn("Final Score (0-100)", format="%.1f", min_value=0.0, max_value=100.0),
-                "Groq LLM (30%)": st.column_config.TextColumn("Groq AI (30%)", width="small"),
-                "LLM Suggestion": st.column_config.TextColumn("LLM Suggestion", width="medium"),
-                "Essential (25%)": st.column_config.TextColumn("Essential (25%)", width="small"),
-                "Practical (20%)": st.column_config.TextColumn("Practical (20%)", width="small"),
-                "Projects (15%)": st.column_config.TextColumn("Projects (15%)", width="small"),
-                "Preferred (10%)": st.column_config.TextColumn("Preferred (10%)", width="small"),
+                "Mandatory Coverage": st.column_config.TextColumn("Mandatory", width="small"),
+                "Practical Depth": st.column_config.TextColumn("Practical", width="small"),
+                "Project Depth": st.column_config.TextColumn("Projects", width="small"),
+                "Preferred Coverage": st.column_config.TextColumn("Preferred", width="small"),
+                "Verified Tenure": st.column_config.TextColumn("Tenure", width="small"),
+                "AI Validated Assessment": st.column_config.TextColumn("AI Validated", width="small"),
                 "Decision Reason": st.column_config.TextColumn("Decision Rationale", width="large"),
-                "Extraction Conf": st.column_config.TextColumn("Conf"),
+                "Conf": st.column_config.TextColumn("Conf"),
                 "Filename": st.column_config.TextColumn("Resume File")
             },
             hide_index=True,
@@ -644,7 +614,6 @@ with tab_reports:
         st.subheader("📋 Candidate Decision Reasons & Detailed Breakdown")
         st.caption("Review the exact rationale, strengths, gaps, and timeline for each candidate below.")
 
-        # Candidate selector tabs or clean cards
         for idx, cand_report in enumerate(reports):
             ev_summary = cand_report["evaluation_summary"]
             proc_status = cand_report.get("processing_status", {})
@@ -659,7 +628,6 @@ with tab_reports:
             }.get(rec, "⚪")
 
             with st.container(border=True):
-                # Header row
                 col_h1, col_h2 = st.columns([3, 1])
                 with col_h1:
                     st.markdown(f"### {rec_icon} {cand_name} — **{rec}**")
@@ -667,7 +635,6 @@ with tab_reports:
                 with col_h2:
                     st.metric("Overall Score", f"{ev_summary['overall_score']:.1f}/100")
 
-                # PROMINENT DECISION REASON CALLOUT
                 st.markdown("#### 🎯 Why was this decision made?")
                 decision_text = ev_summary.get("decision_rationale", "No rationale recorded.")
                 if rec == REC_SELECTION:
@@ -677,26 +644,23 @@ with tab_reports:
                 else:
                     st.error(f"**Not Recommended Reason:** {decision_text}")
 
-                # Groq AI output suggestion banner (if available)
                 llm_info = cand_report.get("llm_evaluation") or {}
                 if llm_info and llm_info.get("llm_applied"):
                     groq_sugg = llm_info.get("llm_suggested_recommendation") or llm_info.get("recommendation", "")
-                    st.info(f"🤖 **Groq AI Qualitative Output:** Suggested **{groq_sugg}** (Qualitative Score: `{llm_info.get('overall_score', 0):.1f}/100` — Weighted 30% in Matrix)")
+                    st.info(f"🤖 **Groq AI Qualitative Assessment:** Suggested **{groq_sugg}** (Python-Validated Score: `{llm_info.get('overall_score', 0):.1f}/100`)")
 
-                # 5 Pillars of the Candidate Matrix
                 m1, m2, m3, m4, m5 = st.columns(5)
-                m1.metric("Essential Match", f"{ev_summary.get('essential_coverage_pct', 0.0):.1f}%", f"{scoring_weights.essential_skills_weight*100:.0f}% Wt")
+                m1.metric("Mandatory Match", f"{ev_summary.get('essential_coverage_pct', 0.0):.1f}%")
+                m2.metric("Practical Depth", f"{ev_summary.get('practical_evidence_score', 0.0):.1f}%")
+                m3.metric("Project Depth", f"{ev_summary.get('project_depth_score', 0.0):.1f}%")
+                m4.metric("Preferred Match", f"{ev_summary.get('preferred_coverage_pct', 0.0):.1f}%")
                 llm_sc_val = ev_summary.get('llm_score')
                 llm_disp = f"{llm_sc_val:.1f}/100" if llm_sc_val is not None else "N/A"
-                m2.metric("🤖 Groq AI Score", llm_disp, f"{scoring_weights.llm_evaluation_weight*100:.0f}% Wt")
-                m3.metric("Practical Depth", f"{ev_summary.get('practical_evidence_score', 0.0):.1f}%", f"{scoring_weights.practical_evidence_weight*100:.0f}% Wt")
-                m4.metric("Project Depth", f"{ev_summary.get('project_depth_score', 0.0):.1f}%", f"{scoring_weights.project_depth_weight*100:.0f}% Wt")
-                m5.metric("Preferred Match", f"{ev_summary.get('preferred_coverage_pct', 0.0):.1f}%", f"{scoring_weights.preferred_skills_weight*100:.0f}% Wt")
+                m5.metric("🤖 AI Validated Score", llm_disp)
 
                 if ev_summary.get("score_breakdown_formula"):
-                    st.caption(f"📐 **Matrix Breakdown:** `{ev_summary['score_breakdown_formula']}`")
+                    st.caption(f"📐 **Evaluation Breakdown:** `{ev_summary['score_breakdown_formula']}`")
 
-                # Extraction Warning (if any)
                 if proc_status.get("is_low_confidence"):
                     st.warning(
                         f"⚠️ **Low Extraction Confidence ({int(proc_status.get('extraction_confidence', 0.0)*100)}%):** "
@@ -704,7 +668,6 @@ with tab_reports:
                         f"Routed to Manual Review to avoid accidental rejection."
                     )
 
-                # Transferable Skills (if any)
                 transferable = ev_summary.get("transferable_skills", [])
                 if transferable:
                     st.info(
@@ -712,20 +675,15 @@ with tab_reports:
                         "; ".join([f"`{t['required']}` ➜ candidate has `{t['candidate_has']}`" for t in transferable])
                     )
 
-                # Verified Employment Timeline (Only highlight if weighted or real internships exist)
-                if scoring_weights.relevant_experience_weight > 0.01 or exp_info.get("employment_periods"):
-                    if exp_info.get("timeline_summary"):
-                        st.markdown(f"📅 **Verified Employment Timeline:** {exp_info['timeline_summary']}")
-                        periods = exp_info.get("employment_periods", [])
-                        if periods:
-                            p_cols = st.columns(min(len(periods), 4))
-                            for p_idx, p in enumerate(periods):
-                                with p_cols[p_idx % len(p_cols)]:
-                                    st.caption(f"**Period {p_idx+1}:** {p['start']:.1f} – {p['end']:.1f} ({p['duration_years']} yrs)")
-                else:
-                    st.caption("ℹ️ **Intern / Skills-First Evaluation:** Prior work tenure is not required or evaluated for this role.")
+                if exp_info.get("timeline_summary") and exp_info["timeline_summary"] != "Unverified":
+                    st.markdown(f"📅 **Verified Employment Timeline:** {exp_info['timeline_summary']}")
+                    periods = exp_info.get("employment_periods", [])
+                    if periods:
+                        p_cols = st.columns(min(len(periods), 4))
+                        for p_idx, p in enumerate(periods):
+                            with p_cols[p_idx % len(p_cols)]:
+                                st.caption(f"**Period {p_idx+1}:** {p['start']:.1f} – {p['end']:.1f} ({p['duration_years']} yrs)")
 
-                # Groq AI Recruiter Synthesis (if available)
                 if cand_report.get("llm_evaluation") and cand_report["llm_evaluation"].get("llm_applied"):
                     llm_info = cand_report["llm_evaluation"]
                     col_st, col_wk = st.columns(2)
@@ -747,8 +705,46 @@ with tab_reports:
                         else:
                             st.caption("No critical gaps identified.")
 
-                # Granular Requirement Evidence (Collapsed by default so it does not clutter)
-                with st.expander("🔎 Optional: View Raw Requirement-by-Requirement Evidence", expanded=False):
+                llm_eval_obj = cand_report.get("llm_evaluation") or {}
+                skills_ass = llm_eval_obj.get("skills_assessment") or {}
+                if skills_ass and any(skills_ass.get(k) for k in ["direct_evidence", "reasonable_inferences", "genuine_gaps", "unknown_information"]):
+                    with st.expander("🧠 Qualitative Evidence & Capability Breakdown", expanded=False):
+                        qc1, qc2 = st.columns(2)
+                        with qc1:
+                            st.markdown("🎯 **Direct Evidence (Demonstrated in Experience/Projects):**")
+                            dev = skills_ass.get("direct_evidence", [])
+                            if dev:
+                                for d in dev:
+                                    st.markdown(f"- {d}")
+                            else:
+                                st.caption("No explicit direct evidence isolated.")
+
+                            st.markdown("💡 **Reasonable Inferences (Related Tech Stack):**")
+                            rinf = skills_ass.get("reasonable_inferences", [])
+                            if rinf:
+                                for r in rinf:
+                                    st.markdown(f"- {r}")
+                            else:
+                                st.caption("None recorded.")
+
+                        with qc2:
+                            st.markdown("⚠️ **Genuine Gaps (Critical Capabilities Missing):**")
+                            gaps = skills_ass.get("genuine_gaps", [])
+                            if gaps:
+                                for g in gaps:
+                                    st.markdown(f"- {g}")
+                            else:
+                                st.caption("No critical competency gaps identified.")
+
+                            st.markdown("❓ **Unknown Information (Unmentioned Soft Skills / Behavioral):**")
+                            unks = skills_ass.get("unknown_information", [])
+                            if unks:
+                                for u in unks:
+                                    st.markdown(f"- {u}")
+                            else:
+                                st.caption("No unknown items recorded.")
+
+                with st.expander("🔎 View Raw Requirement-by-Requirement Evidence", expanded=False):
                     badge_colors = {
                         MatchClassification.EXACT_MATCH.value: "green",
                         MatchClassification.STRONG_SEMANTIC_MATCH.value: "blue",
@@ -762,7 +758,7 @@ with tab_reports:
                         badge_color = badge_colors.get(item["classification"], "gray")
                         st.markdown(
                             f"**:{badge_color}[{item['classification']}]** | "
-                            f"**{item['priority']}**: {item['requirement_text']}"
+                            f"**{item['priority']}** (Weight: {item.get('weight', 0)*100:.1f}%): {item['requirement_text']}"
                         )
                         if item["evidence_sentence"]:
                             st.markdown(f"> *\"{item['evidence_sentence']}\"*")

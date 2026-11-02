@@ -154,3 +154,15 @@ class SemanticMatcher:
         # Sort descending by score
         matches.sort(key=lambda x: x[1], reverse=True)
         return matches
+
+    def find_top_k_semantic_matches(
+        self,
+        query_text: str,
+        resume: ProcessedResume,
+        k: int = 3,
+        threshold: Optional[float] = None
+    ) -> List[Tuple[EvidenceSentence, float]]:
+        """Returns top-k sentences in the resume scoring above the given threshold."""
+        matches = self.find_all_matches_above_threshold(query_text, resume, threshold=threshold)
+        return matches[:k]
+

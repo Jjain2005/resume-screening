@@ -1,6 +1,6 @@
-Candidate Name,Filename,Overall Score,Groq LLM Score (30%),LLM Suggestion,Essential Coverage (%),Practical Depth (%),Project Depth (%),Preferred Coverage (%),Verified Tenure (Yrs),Recommendation,Req Matched,Extraction Confidence
-Alex Morgan,alex_morgan_ai_engineer.pdf,82.2,,N/A,98.3,52.8,0.0,100.0,6.8,Recommended for Selection,6/6,100%
-Jordan Lee,jordan_lee_backend_dev.pdf,58.0,,N/A,70.0,74.5,0.0,66.7,4.8,Not Recommended,4/6,100%
-Morgan Vance,morgan_vance_minimal.pdf,10.8,,N/A,21.7,7.0,0.0,0.0,0.0,Manual Review Required,1/6,25%
-Taylor Reed,taylor_reed_frontend_dev.pdf,5.0,,N/A,5.0,0.0,0.0,0.0,3.8,Not Recommended,0/6,100%
-Sam Rivera,sam_rivera_marketing.pdf,0.0,,N/A,0.0,0.0,0.0,0.0,4.8,Not Recommended,0/6,100%
+Candidate Name,Filename,Overall Score,Essential Coverage (%),Practical Depth (%),Project Depth (%),Preferred Coverage (%),Verified Tenure (Yrs),Recommendation,Req Matched,Extraction Confidence,AI Validated Assessment
+Alex Morgan,alex_morgan_ai_engineer.pdf,98.7,100.0,96.1,97.8,100.0,8.8,Recommended for Selection,6/6,100%,
+Jordan Lee,jordan_lee_backend_dev.pdf,77.8,68.4,87.7,100.0,66.7,6.8,Manual Review Required,4/6,100%,
+Morgan Vance,morgan_vance_minimal.pdf,26.0,35.1,36.5,0.0,0.0,0.0,Manual Review Required,2/6,25%,
+Sam Rivera,sam_rivera_marketing.pdf,16.7,16.7,61.0,0.0,0.0,6.8,Not Recommended,1/6,100%,
+Taylor Reed,taylor_reed_frontend_dev.pdf,16.7,16.7,61.0,0.0,0.0,5.8,Not Recommended,1/6,100%,

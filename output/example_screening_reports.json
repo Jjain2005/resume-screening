@@ -13,26 +13,26 @@
       "warnings": []
     },
     "verified_experience": {
-      "verified_years": 6.8,
+      "verified_years": 8.8,
       "employment_periods": [
         {
           "start": 2018.0,
-          "end": 2024.75,
-          "duration_years": 6.8
+          "end": 2026.83,
+          "duration_years": 8.8
         }
       ],
-      "timeline_summary": "6.8 verified years across 1 non-overlapping period(s)."
+      "timeline_summary": "8.8 verified years across 1 non-overlapping period(s)."
     },
     "job_position": "Senior AI & Machine Learning Engineer",
     "evaluation_summary": {
-      "overall_score": 82.2,
-      "essential_coverage_pct": 98.3,
+      "overall_score": 98.7,
+      "essential_coverage_pct": 100.0,
       "preferred_coverage_pct": 100.0,
-      "practical_evidence_score": 52.8,
+      "practical_evidence_score": 96.1,
       "experience_duration_score": 100.0,
-      "project_depth_score": 0.0,
+      "project_depth_score": 97.8,
       "unsupported_keyword_penalty": 0.0,
-      "verified_tenure_years": 6.8,
+      "verified_tenure_years": 8.8,
       "min_years_required": 4.0,
       "recommendation": "Recommended for Selection",
       "total_essential_count": 6,
@@ -41,13 +41,24 @@
       "matched_preferred_count": 3,
       "transferable_skills": [],
       "is_low_confidence_extraction": false,
-      "score_breakdown_formula": "Overall = (98.3% \u00d7 0.45) + (100.0% \u00d7 0.15) + (52.8% \u00d7 0.15) + (100.0% \u00d7 0.15) + (0.0% \u00d7 0.10) = 82.2/100",
-      "decision_rationale": "Recommended for Selection: Comprehensive match on mandatory skills (98%), verified tenure (6.8 yrs), and grounded practical implementation (53%). Matched 6/6 essential requirements (98.3% coverage; 2 demonstrated in work/projects, 4 listed-only). Practical evidence: 52.8%. Project quality: 0.0%. Verified tenure: 6.8 yrs. Essential skills listed but not demonstrated in work/projects: Strong expertise in Natural Language Processing (NLP) or Deep Learning, Hands-on proficiency with PyTorch or TensorFlow frameworks.",
+      "score_breakdown_formula": "Overall = 98.7/100 [Dynamic JD Criteria: 100.0% Essential, 96.1% Practical Evidence, 97.8% Project Depth]",
+      "decision_rationale": "Recommended for Selection: Strong JD match \u2014 6/6 essential requirements (100%), practical demonstration 96%, tenure satisfied (8.8 yrs). Matched 6/6 essential requirements (100.0% coverage; 6 demonstrated, 0 listed-only). Practical evidence: 96.1%. Project quality: 97.8%. Verified tenure: 8.8 yrs (Required by JD: 4.0 yrs).",
       "llm_score": null,
       "llm_recommendation": null,
       "llm_synthesis": null,
-      "required_coverage_pct": 98.3,
-      "evidence_quality_score": 52.8,
+      "dynamic_criteria_scores": {
+        "req_1": 100.0,
+        "req_2": 100.0,
+        "req_3": 100.0,
+        "req_4": 100.0,
+        "req_5": 100.0,
+        "req_6": 100.0,
+        "req_7": 100.0,
+        "req_8": 100.0,
+        "req_9": 100.0
+      },
+      "required_coverage_pct": 100.0,
+      "evidence_quality_score": 96.1,
       "experience_relevance_score": 100.0,
       "total_required_count": 6,
       "matched_required_count": 6
@@ -64,7 +75,7 @@
       {
         "requirement_id": "req_1",
         "requirement_text": "4+ years of professional experience in Python development",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
         "matched_term": "Python",
         "canonical_skill": "Python",
@@ -74,57 +85,174 @@
         "evidence_strength": "Strong Implementation",
         "matching_method": "Exact Canonical",
         "explanation": "Direct exact canonical of 'Python' located in Experience section.",
-        "confidence": 0.98
+        "confidence": 0.98,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.739,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Senior AI Engineer with 6+ years of production experience in Natural Language Processing, deep learning",
+            "section": "Summary",
+            "similarity": 0.675,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Lead NLP Engineer - Cognitive AI Systems (2021 - Present)",
+            "section": "Experience",
+            "similarity": 0.665,
+            "strength": "Experience Evidence"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_2",
         "requirement_text": "Strong expertise in Natural Language Processing (NLP) or Deep Learning",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
-        "matched_term": "Natural Language Processing",
+        "matched_term": "NLP",
         "canonical_skill": "Natural Language Processing",
-        "evidence_sentence": "Senior AI Engineer with 6+ years of production experience in Natural Language Processing, deep learning",
-        "resume_section": "Summary",
+        "evidence_sentence": "Engineered multi-class NLP models to categorize customer sentiment using BERT and transformers, improving",
+        "resume_section": "Experience",
         "similarity_score": 1.0,
-        "evidence_strength": "Mentioned",
-        "matching_method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'Natural Language Processing' located in Summary section.",
-        "confidence": 0.9
+        "evidence_strength": "Strong Implementation",
+        "matching_method": "Exact Alias",
+        "explanation": "Known alias 'NLP' of canonical skill 'Natural Language Processing' matched in Experience section.",
+        "confidence": 0.98,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Natural Language Processing (NLP)",
+            "section": "Skills",
+            "similarity": 0.847,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Senior AI Engineer with 6+ years of production experience in Natural Language Processing, deep learning",
+            "section": "Summary",
+            "similarity": 0.831,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Lead NLP Engineer - Cognitive AI Systems (2021 - Present)",
+            "section": "Experience",
+            "similarity": 0.797,
+            "strength": "Experience Evidence"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_3",
         "requirement_text": "Hands-on proficiency with PyTorch or TensorFlow frameworks",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
         "matched_term": "PyTorch",
         "canonical_skill": "PyTorch",
-        "evidence_sentence": "Clinical Entity Extraction Engine (PyTorch, Transformers, Spacy, Docker)",
+        "evidence_sentence": "Fine-tuned RoBERTa models using PyTorch on AWS GPU clusters to extract biomedical entities from clinical",
         "resume_section": "Projects",
         "similarity_score": 1.0,
-        "evidence_strength": "Listed Only",
+        "evidence_strength": "Project Evidence",
         "matching_method": "Exact Canonical",
         "explanation": "Direct exact canonical of 'PyTorch' located in Projects section.",
-        "confidence": 0.9
+        "confidence": 0.9,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "PyTorch",
+            "section": "Skills",
+            "similarity": 0.787,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Fine-tuned RoBERTa models using PyTorch on AWS GPU clusters to extract biomedical entities from clinical",
+            "section": "Projects",
+            "similarity": 0.737,
+            "strength": "Project Evidence"
+          },
+          {
+            "sentence": "inference pipelines.",
+            "section": "Summary",
+            "similarity": 0.712,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_4",
         "requirement_text": "Experience deploying microservices with Docker and Kubernetes",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
-        "matched_term": "Kubernetes",
+        "matched_term": "Experience deploying microservices with Docker, Kubernetes",
         "canonical_skill": "Kubernetes",
-        "evidence_sentence": "Kubernetes nodes.",
+        "evidence_sentence": "Packaged backend services into Docker containers and managed cluster workloads with Kubernetes Helm",
         "resume_section": "Experience",
         "similarity_score": 1.0,
-        "evidence_strength": "Listed Only",
-        "matching_method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'Kubernetes' located in Experience section.",
-        "confidence": 0.9
+        "evidence_strength": "Strong Implementation",
+        "matching_method": "Compound ALL_OF (2/2)",
+        "explanation": "All 2 required components matched: Experience deploying microservices with Docker, Kubernetes.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ALL_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Packaged backend services into Docker containers and managed cluster workloads with Kubernetes Helm",
+            "section": "Experience",
+            "similarity": 0.848,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "Kubernetes",
+            "section": "Skills",
+            "similarity": 0.812,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "architectures, and scalable cloud deployment.",
+            "section": "Summary",
+            "similarity": 0.754,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {
+          "Experience deploying microservices with Docker": {
+            "matched": true,
+            "term": "Docker",
+            "method": "Exact Canonical",
+            "sentence": "Packaged backend services into Docker containers and managed cluster workloads with Kubernetes Helm"
+          },
+          "Kubernetes": {
+            "matched": true,
+            "term": "Kubernetes",
+            "method": "Exact Canonical",
+            "sentence": "Packaged backend services into Docker containers and managed cluster workloads with Kubernetes Helm"
+          }
+        }
       },
       {
         "requirement_id": "req_5",
         "requirement_text": "Relational database experience with PostgreSQL",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
         "matched_term": "PostgreSQL",
         "canonical_skill": "PostgreSQL",
@@ -134,22 +262,74 @@
         "evidence_strength": "Strong Implementation",
         "matching_method": "Exact Canonical",
         "explanation": "Direct exact canonical of 'PostgreSQL' located in Experience section.",
-        "confidence": 0.98
+        "confidence": 0.98,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "PostgreSQL",
+            "section": "Skills",
+            "similarity": 0.845,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Designed 3NF database schemas and optimized indexing in PostgreSQL to improve query times by 40%.",
+            "section": "Experience",
+            "similarity": 0.803,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "architectures, and scalable cloud deployment.",
+            "section": "Summary",
+            "similarity": 0.648,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_6",
         "requirement_text": "Bachelor's or Master's in Computer Science or related field",
-        "priority": "Required",
-        "classification": "Strong Semantic Match",
-        "matched_term": "Master of Science in Computer Science, G...",
-        "canonical_skill": null,
+        "priority": "Mandatory",
+        "classification": "Exact Match",
+        "matched_term": "Master of Science in Computer Science, Georgia Institute of Technology (2018)",
+        "canonical_skill": "Education",
         "evidence_sentence": "Master of Science in Computer Science, Georgia Institute of Technology (2018)",
         "resume_section": "Education",
-        "similarity_score": 0.767,
-        "evidence_strength": "Listed Only",
-        "matching_method": "Semantic Matching",
-        "explanation": "Strong semantic correspondence (0.77 cosine similarity) found in Education.",
-        "confidence": 0.73
+        "similarity_score": 1.0,
+        "evidence_strength": "Experience Evidence",
+        "matching_method": "Education Verification",
+        "explanation": "Candidate satisfies education requirement with: 'Master of Science in Computer Science, Georgia Institute of Technology (2018)'.",
+        "confidence": 0.98,
+        "weight": 0.1333,
+        "req_type": "Education",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Master of Science in Computer Science, Georgia Institute of Technology (2018)",
+            "section": "Education",
+            "similarity": 0.767,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Bachelor of Science in Software Engineering, University of Washington (2016)",
+            "section": "Education",
+            "similarity": 0.68,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Scikit-Learn",
+            "section": "Skills",
+            "similarity": 0.598,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_7",
@@ -164,7 +344,33 @@
         "evidence_strength": "Strong Implementation",
         "matching_method": "Exact Canonical",
         "explanation": "Direct exact canonical of 'FastAPI' located in Experience section.",
-        "confidence": 0.98
+        "confidence": 0.98,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Architected low-latency REST APIs using FastAPI with Pydantic validation serving 5,000 QPS across distributed",
+            "section": "Experience",
+            "similarity": 0.871,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "FastAPI",
+            "section": "Skills",
+            "similarity": 0.822,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "architectures, and scalable cloud deployment.",
+            "section": "Summary",
+            "similarity": 0.741,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_8",
@@ -179,7 +385,33 @@
         "evidence_strength": "Strong Implementation",
         "matching_method": "Exact Canonical",
         "explanation": "Direct exact canonical of 'CI/CD' located in Experience section.",
-        "confidence": 0.98
+        "confidence": 0.98,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Configured automated GitHub Actions workflows for testing, linting, and continuous deployment (CI/CD).",
+            "section": "Experience",
+            "similarity": 0.875,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "CI/CD",
+            "section": "Skills",
+            "similarity": 0.736,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Kubernetes",
+            "section": "Skills",
+            "similarity": 0.651,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_9",
@@ -194,69 +426,107 @@
         "evidence_strength": "Strong Implementation",
         "matching_method": "Exact Canonical",
         "explanation": "Direct exact canonical of 'Scikit-Learn' located in Experience section.",
-        "confidence": 0.98
+        "confidence": 0.98,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Scikit-Learn",
+            "section": "Skills",
+            "similarity": 0.843,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Developed and deployed a customer churn prediction pipeline using scikit-learn and Python that reduced churn",
+            "section": "Experience",
+            "similarity": 0.742,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "inference pipelines.",
+            "section": "Summary",
+            "similarity": 0.712,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       }
     ],
     "evidence_breakdown": [
       {
         "requirement": "4+ years of professional experience in Python development",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
         "evidence_sentence": "Developed and deployed a customer churn prediction pipeline using scikit-learn and Python that reduced churn",
         "section": "Experience",
         "strength": "Strong Implementation",
         "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'Python' located in Experience section."
+        "explanation": "Direct exact canonical of 'Python' located in Experience section.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "Strong expertise in Natural Language Processing (NLP) or Deep Learning",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
-        "evidence_sentence": "Senior AI Engineer with 6+ years of production experience in Natural Language Processing, deep learning",
-        "section": "Summary",
-        "strength": "Mentioned",
-        "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'Natural Language Processing' located in Summary section."
+        "evidence_sentence": "Engineered multi-class NLP models to categorize customer sentiment using BERT and transformers, improving",
+        "section": "Experience",
+        "strength": "Strong Implementation",
+        "method": "Exact Alias",
+        "explanation": "Known alias 'NLP' of canonical skill 'Natural Language Processing' matched in Experience section.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "Hands-on proficiency with PyTorch or TensorFlow frameworks",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
-        "evidence_sentence": "Clinical Entity Extraction Engine (PyTorch, Transformers, Spacy, Docker)",
+        "evidence_sentence": "Fine-tuned RoBERTa models using PyTorch on AWS GPU clusters to extract biomedical entities from clinical",
         "section": "Projects",
-        "strength": "Listed Only",
+        "strength": "Project Evidence",
         "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'PyTorch' located in Projects section."
+        "explanation": "Direct exact canonical of 'PyTorch' located in Projects section.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "Experience deploying microservices with Docker and Kubernetes",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
-        "evidence_sentence": "Kubernetes nodes.",
+        "evidence_sentence": "Packaged backend services into Docker containers and managed cluster workloads with Kubernetes Helm",
         "section": "Experience",
-        "strength": "Listed Only",
-        "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'Kubernetes' located in Experience section."
+        "strength": "Strong Implementation",
+        "method": "Compound ALL_OF (2/2)",
+        "explanation": "All 2 required components matched: Experience deploying microservices with Docker, Kubernetes.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "Relational database experience with PostgreSQL",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
         "evidence_sentence": "Designed 3NF database schemas and optimized indexing in PostgreSQL to improve query times by 40%.",
         "section": "Experience",
         "strength": "Strong Implementation",
         "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'PostgreSQL' located in Experience section."
+        "explanation": "Direct exact canonical of 'PostgreSQL' located in Experience section.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "Bachelor's or Master's in Computer Science or related field",
-        "priority": "Required",
-        "classification": "Strong Semantic Match",
+        "priority": "Mandatory",
+        "classification": "Exact Match",
         "evidence_sentence": "Master of Science in Computer Science, Georgia Institute of Technology (2018)",
         "section": "Education",
-        "strength": "Listed Only",
-        "method": "Semantic Matching",
-        "explanation": "Strong semantic correspondence (0.77 cosine similarity) found in Education."
+        "strength": "Experience Evidence",
+        "method": "Education Verification",
+        "explanation": "Candidate satisfies education requirement with: 'Master of Science in Computer Science, Georgia Institute of Technology (2018)'.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "Experience developing high-throughput APIs with FastAPI",
@@ -266,7 +536,9 @@
         "section": "Experience",
         "strength": "Strong Implementation",
         "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'FastAPI' located in Experience section."
+        "explanation": "Direct exact canonical of 'FastAPI' located in Experience section.",
+        "weight": 0.06666666666666667,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "CI/CD pipeline automation with GitHub Actions",
@@ -276,7 +548,9 @@
         "section": "Experience",
         "strength": "Strong Implementation",
         "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'CI/CD' located in Experience section."
+        "explanation": "Direct exact canonical of 'CI/CD' located in Experience section.",
+        "weight": 0.06666666666666667,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "Experience in Scikit-Learn predictive modeling",
@@ -286,7 +560,9 @@
         "section": "Experience",
         "strength": "Strong Implementation",
         "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'Scikit-Learn' located in Experience section."
+        "explanation": "Direct exact canonical of 'Scikit-Learn' located in Experience section.",
+        "weight": 0.06666666666666667,
+        "fulfillment_ratio": 1.0
       }
     ]
   },
@@ -304,41 +580,52 @@
       "warnings": []
     },
     "verified_experience": {
-      "verified_years": 4.8,
+      "verified_years": 6.8,
       "employment_periods": [
         {
           "start": 2020.0,
-          "end": 2024.75,
-          "duration_years": 4.8
+          "end": 2026.83,
+          "duration_years": 6.8
         }
       ],
-      "timeline_summary": "4.8 verified years across 1 non-overlapping period(s)."
+      "timeline_summary": "6.8 verified years across 1 non-overlapping period(s)."
     },
     "job_position": "Senior AI & Machine Learning Engineer",
     "evaluation_summary": {
-      "overall_score": 58.0,
-      "essential_coverage_pct": 70.0,
+      "overall_score": 77.8,
+      "essential_coverage_pct": 68.4,
       "preferred_coverage_pct": 66.7,
-      "practical_evidence_score": 74.5,
+      "practical_evidence_score": 87.7,
       "experience_duration_score": 100.0,
-      "project_depth_score": 0.0,
+      "project_depth_score": 100.0,
       "unsupported_keyword_penalty": 0.0,
-      "verified_tenure_years": 4.8,
+      "verified_tenure_years": 6.8,
       "min_years_required": 4.0,
-      "recommendation": "Not Recommended",
+      "recommendation": "Manual Review Required",
       "total_essential_count": 6,
       "matched_essential_count": 4,
       "total_preferred_count": 3,
       "matched_preferred_count": 2,
       "transferable_skills": [],
       "is_low_confidence_extraction": false,
-      "score_breakdown_formula": "Overall = (70.0% \u00d7 0.45) + (66.7% \u00d7 0.15) + (74.5% \u00d7 0.15) + (100.0% \u00d7 0.15) + (0.0% \u00d7 0.10) = 58.0/100",
-      "decision_rationale": "Not Recommended: Candidate evaluation (58.0/100, 70% essential coverage) did not satisfy minimum criteria for recommendation or borderline review. Matched 4/6 essential requirements (70.0% coverage; 3 demonstrated in work/projects, 1 listed-only). Practical evidence: 74.5%. Project quality: 0.0%. Verified tenure: 4.8 yrs. Missing mandatory requirements: Strong expertise in Natural Language Processing (NLP) or Deep Learning. Essential skills listed but not demonstrated in work/projects: Bachelor's or Master's in Computer Science or related field.",
+      "score_breakdown_formula": "Overall = 77.8/100 [Dynamic JD Criteria: 68.4% Essential, 87.7% Practical Evidence, 100.0% Project Depth]",
+      "decision_rationale": "Manual Review Required: Borderline candidate requiring human evaluation. Matched 4/6 essential requirements (68.4% coverage; 4 demonstrated, 0 listed-only). Practical evidence: 87.7%. Project quality: 100.0%. Verified tenure: 6.8 yrs (Required by JD: 4.0 yrs). Missing mandatory requirements: Strong expertise in Natural Language Processing (NLP) or Deep Learning.",
       "llm_score": null,
       "llm_recommendation": null,
       "llm_synthesis": null,
-      "required_coverage_pct": 70.0,
-      "evidence_quality_score": 74.5,
+      "dynamic_criteria_scores": {
+        "req_1": 100.0,
+        "req_2": 0.0,
+        "req_3": 10.5,
+        "req_4": 100.0,
+        "req_5": 100.0,
+        "req_6": 100.0,
+        "req_7": 100.0,
+        "req_8": 100.0,
+        "req_9": 0.0
+      },
+      "required_coverage_pct": 68.4,
+      "evidence_quality_score": 87.7,
       "experience_relevance_score": 100.0,
       "total_required_count": 6,
       "matched_required_count": 4
@@ -355,7 +642,7 @@
       {
         "requirement_id": "req_1",
         "requirement_text": "4+ years of professional experience in Python development",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
         "matched_term": "Python",
         "canonical_skill": "Python",
@@ -365,12 +652,38 @@
         "evidence_strength": "Strong Implementation",
         "matching_method": "Exact Canonical",
         "explanation": "Direct exact canonical of 'Python' located in Experience section.",
-        "confidence": 0.98
+        "confidence": 0.98,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Backend Software Engineer with 5 years of experience building resilient microservices in Python and managing cloud",
+            "section": "Summary",
+            "similarity": 0.783,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.739,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Architected high-throughput REST APIs using Python and FastAPI handling 10M daily transactions.",
+            "section": "Experience",
+            "similarity": 0.658,
+            "strength": "Strong Implementation"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_2",
         "requirement_text": "Strong expertise in Natural Language Processing (NLP) or Deep Learning",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "Natural Language Processing",
@@ -379,13 +692,39 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Strong database optimization skills in PostgreSQL.",
+            "section": "Summary",
+            "similarity": 0.73,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Designed and maintained relational databases in PostgreSQL with complex partitioned queries.",
+            "section": "Experience",
+            "similarity": 0.627,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.623,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_3",
         "requirement_text": "Hands-on proficiency with PyTorch or TensorFlow frameworks",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Partial Evidence",
         "matched_term": "Python...",
         "canonical_skill": "TensorFlow",
@@ -395,27 +734,92 @@
         "evidence_strength": "Listed Only",
         "matching_method": "Semantic (Partial)",
         "explanation": "Moderate semantic similarity (0.67) indicates partial evidence, but lacks specific confirmation.",
-        "confidence": 0.54
+        "confidence": 0.54,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.3,
+        "evidence_passages": [
+          {
+            "sentence": "Strong database optimization skills in PostgreSQL.",
+            "section": "Summary",
+            "similarity": 0.701,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.669,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Backend Engineer - CloudScale Platforms (2020 - Present)",
+            "section": "Experience",
+            "similarity": 0.643,
+            "strength": "Experience Evidence"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_4",
         "requirement_text": "Experience deploying microservices with Docker and Kubernetes",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
-        "matched_term": "Kubernetes",
+        "matched_term": "Experience deploying microservices with Docker, Kubernetes",
         "canonical_skill": "Kubernetes",
         "evidence_sentence": "Managed containerized application deployments using Docker and Kubernetes clusters across three availability",
         "resume_section": "Experience",
         "similarity_score": 1.0,
         "evidence_strength": "Strong Implementation",
-        "matching_method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'Kubernetes' located in Experience section.",
-        "confidence": 0.98
+        "matching_method": "Compound ALL_OF (2/2)",
+        "explanation": "All 2 required components matched: Experience deploying microservices with Docker, Kubernetes.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ALL_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "infrastructure with Docker and Kubernetes.",
+            "section": "Summary",
+            "similarity": 0.871,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Managed containerized application deployments using Docker and Kubernetes clusters across three availability",
+            "section": "Experience",
+            "similarity": 0.841,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "Kubernetes",
+            "section": "Skills",
+            "similarity": 0.812,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {
+          "Experience deploying microservices with Docker": {
+            "matched": true,
+            "term": "Docker",
+            "method": "Exact Canonical",
+            "sentence": "Managed containerized application deployments using Docker and Kubernetes clusters across three availability"
+          },
+          "Kubernetes": {
+            "matched": true,
+            "term": "Kubernetes",
+            "method": "Exact Canonical",
+            "sentence": "Managed containerized application deployments using Docker and Kubernetes clusters across three availability"
+          }
+        }
       },
       {
         "requirement_id": "req_5",
         "requirement_text": "Relational database experience with PostgreSQL",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
         "matched_term": "PostgreSQL",
         "canonical_skill": "PostgreSQL",
@@ -425,22 +829,74 @@
         "evidence_strength": "Strong Implementation",
         "matching_method": "Exact Canonical",
         "explanation": "Direct exact canonical of 'PostgreSQL' located in Experience section.",
-        "confidence": 0.98
+        "confidence": 0.98,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Designed and maintained relational databases in PostgreSQL with complex partitioned queries.",
+            "section": "Experience",
+            "similarity": 0.877,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "PostgreSQL",
+            "section": "Skills",
+            "similarity": 0.845,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Strong database optimization skills in PostgreSQL.",
+            "section": "Summary",
+            "similarity": 0.832,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_6",
         "requirement_text": "Bachelor's or Master's in Computer Science or related field",
-        "priority": "Required",
-        "classification": "Strong Semantic Match",
-        "matched_term": "Bachelor of Science in Computer Science,...",
-        "canonical_skill": null,
+        "priority": "Mandatory",
+        "classification": "Exact Match",
+        "matched_term": "Bachelor of Science in Computer Science, Purdue University (2019)",
+        "canonical_skill": "Education",
         "evidence_sentence": "Bachelor of Science in Computer Science, Purdue University (2019)",
         "resume_section": "Education",
-        "similarity_score": 0.795,
-        "evidence_strength": "Listed Only",
-        "matching_method": "Semantic Matching",
-        "explanation": "Strong semantic correspondence (0.80 cosine similarity) found in Education.",
-        "confidence": 0.76
+        "similarity_score": 1.0,
+        "evidence_strength": "Experience Evidence",
+        "matching_method": "Education Verification",
+        "explanation": "Candidate satisfies education requirement with: 'Bachelor of Science in Computer Science, Purdue University (2019)'.",
+        "confidence": 0.98,
+        "weight": 0.1333,
+        "req_type": "Education",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Bachelor of Science in Computer Science, Purdue University (2019)",
+            "section": "Education",
+            "similarity": 0.795,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.581,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Strong database optimization skills in PostgreSQL.",
+            "section": "Summary",
+            "similarity": 0.577,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_7",
@@ -455,7 +911,33 @@
         "evidence_strength": "Strong Implementation",
         "matching_method": "Exact Canonical",
         "explanation": "Direct exact canonical of 'FastAPI' located in Experience section.",
-        "confidence": 0.98
+        "confidence": 0.98,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Architected high-throughput REST APIs using Python and FastAPI handling 10M daily transactions.",
+            "section": "Experience",
+            "similarity": 0.888,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "FastAPI",
+            "section": "Skills",
+            "similarity": 0.822,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Automated integration tests and deployment pipelines using GitHub Actions CI/CD.",
+            "section": "Experience",
+            "similarity": 0.725,
+            "strength": "Strong Implementation"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_8",
@@ -470,7 +952,33 @@
         "evidence_strength": "Strong Implementation",
         "matching_method": "Exact Canonical",
         "explanation": "Direct exact canonical of 'CI/CD' located in Experience section.",
-        "confidence": 0.98
+        "confidence": 0.98,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Automated integration tests and deployment pipelines using GitHub Actions CI/CD.",
+            "section": "Experience",
+            "similarity": 0.889,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "CI/CD",
+            "section": "Skills",
+            "similarity": 0.736,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Distributed Task Scheduler (Python, Redis, Docker)",
+            "section": "Projects",
+            "similarity": 0.657,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_9",
@@ -484,60 +992,96 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Strong database optimization skills in PostgreSQL.",
+            "section": "Summary",
+            "similarity": 0.625,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Backend Engineer - CloudScale Platforms (2020 - Present)",
+            "section": "Experience",
+            "similarity": 0.616,
+            "strength": "Experience Evidence"
+          },
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.612,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       }
     ],
     "evidence_breakdown": [
       {
         "requirement": "4+ years of professional experience in Python development",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
         "evidence_sentence": "Architected high-throughput REST APIs using Python and FastAPI handling 10M daily transactions.",
         "section": "Experience",
         "strength": "Strong Implementation",
         "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'Python' located in Experience section."
+        "explanation": "Direct exact canonical of 'Python' located in Experience section.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "Hands-on proficiency with PyTorch or TensorFlow frameworks",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Partial Evidence",
         "evidence_sentence": "Python",
         "section": "Skills",
         "strength": "Listed Only",
         "method": "Semantic (Partial)",
-        "explanation": "Moderate semantic similarity (0.67) indicates partial evidence, but lacks specific confirmation."
+        "explanation": "Moderate semantic similarity (0.67) indicates partial evidence, but lacks specific confirmation.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 0.3
       },
       {
         "requirement": "Experience deploying microservices with Docker and Kubernetes",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
         "evidence_sentence": "Managed containerized application deployments using Docker and Kubernetes clusters across three availability",
         "section": "Experience",
         "strength": "Strong Implementation",
-        "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'Kubernetes' located in Experience section."
+        "method": "Compound ALL_OF (2/2)",
+        "explanation": "All 2 required components matched: Experience deploying microservices with Docker, Kubernetes.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "Relational database experience with PostgreSQL",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
         "evidence_sentence": "Designed and maintained relational databases in PostgreSQL with complex partitioned queries.",
         "section": "Experience",
         "strength": "Strong Implementation",
         "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'PostgreSQL' located in Experience section."
+        "explanation": "Direct exact canonical of 'PostgreSQL' located in Experience section.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "Bachelor's or Master's in Computer Science or related field",
-        "priority": "Required",
-        "classification": "Strong Semantic Match",
+        "priority": "Mandatory",
+        "classification": "Exact Match",
         "evidence_sentence": "Bachelor of Science in Computer Science, Purdue University (2019)",
         "section": "Education",
-        "strength": "Listed Only",
-        "method": "Semantic Matching",
-        "explanation": "Strong semantic correspondence (0.80 cosine similarity) found in Education."
+        "strength": "Experience Evidence",
+        "method": "Education Verification",
+        "explanation": "Candidate satisfies education requirement with: 'Bachelor of Science in Computer Science, Purdue University (2019)'.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "Experience developing high-throughput APIs with FastAPI",
@@ -547,7 +1091,9 @@
         "section": "Experience",
         "strength": "Strong Implementation",
         "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'FastAPI' located in Experience section."
+        "explanation": "Direct exact canonical of 'FastAPI' located in Experience section.",
+        "weight": 0.06666666666666667,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "CI/CD pipeline automation with GitHub Actions",
@@ -557,7 +1103,9 @@
         "section": "Experience",
         "strength": "Strong Implementation",
         "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'CI/CD' located in Experience section."
+        "explanation": "Direct exact canonical of 'CI/CD' located in Experience section.",
+        "weight": 0.06666666666666667,
+        "fulfillment_ratio": 1.0
       }
     ]
   },
@@ -584,10 +1132,10 @@
     },
     "job_position": "Senior AI & Machine Learning Engineer",
     "evaluation_summary": {
-      "overall_score": 10.8,
-      "essential_coverage_pct": 21.7,
+      "overall_score": 26.0,
+      "essential_coverage_pct": 35.1,
       "preferred_coverage_pct": 0.0,
-      "practical_evidence_score": 7.0,
+      "practical_evidence_score": 36.5,
       "experience_duration_score": 0.0,
       "project_depth_score": 0.0,
       "unsupported_keyword_penalty": 0.0,
@@ -595,25 +1143,36 @@
       "min_years_required": 4.0,
       "recommendation": "Manual Review Required",
       "total_essential_count": 6,
-      "matched_essential_count": 1,
+      "matched_essential_count": 2,
       "total_preferred_count": 3,
       "matched_preferred_count": 0,
       "transferable_skills": [],
       "is_low_confidence_extraction": true,
-      "score_breakdown_formula": "Overall = (21.7% \u00d7 0.45) + (0.0% \u00d7 0.15) + (7.0% \u00d7 0.15) + (0.0% \u00d7 0.15) + (0.0% \u00d7 0.10) = 10.8/100",
-      "decision_rationale": "Manual Review Required: Low extraction confidence or unreadable PDF text. Human verification is required before a hiring decision can be made. Matched 1/6 essential requirements (21.7% coverage; 0 demonstrated in work/projects, 1 listed-only). Practical evidence: 7.0%. Project quality: 0.0%. Verified tenure: 0.0 yrs. Missing mandatory requirements: Strong expertise in Natural Language Processing (NLP) or Deep Learning, Experience deploying microservices with Docker and Kubernetes, Relational database experience with PostgreSQL. Essential skills listed but not demonstrated in work/projects: 4+ years of professional experience in Python development.",
+      "score_breakdown_formula": "Overall = 26.0/100 [Dynamic JD Criteria: 35.1% Essential, 36.5% Practical Evidence, 0.0% Project Depth]",
+      "decision_rationale": "Manual Review Required: Low extraction confidence or unreadable text. Human verification is required before a hiring decision can be made. Matched 2/6 essential requirements (35.1% coverage; 1 demonstrated, 1 listed-only). Practical evidence: 36.5%. Project quality: 0.0%. Verified tenure: 0.0 yrs (Required by JD: 4.0 yrs). Missing mandatory requirements: Strong expertise in Natural Language Processing (NLP) or Deep Learning, Experience deploying microservices with Docker and Kubernetes, Relational database experience with PostgreSQL.",
       "llm_score": null,
       "llm_recommendation": null,
       "llm_synthesis": null,
-      "required_coverage_pct": 21.7,
-      "evidence_quality_score": 7.0,
+      "dynamic_criteria_scores": {
+        "req_1": 100.0,
+        "req_2": 0.0,
+        "req_3": 10.5,
+        "req_4": 0.0,
+        "req_5": 0.0,
+        "req_6": 100.0,
+        "req_7": 0.0,
+        "req_8": 0.0,
+        "req_9": 0.0
+      },
+      "required_coverage_pct": 35.1,
+      "evidence_quality_score": 36.5,
       "experience_relevance_score": 0.0,
       "total_required_count": 6,
-      "matched_required_count": 1
+      "matched_required_count": 2
     },
     "llm_evaluation": null,
     "skills_analysis": {
-      "matched_required_count": 2,
+      "matched_required_count": 3,
       "total_required_count": 6,
       "matched_preferred_count": 0,
       "total_preferred_count": 3,
@@ -623,7 +1182,7 @@
       {
         "requirement_id": "req_1",
         "requirement_text": "4+ years of professional experience in Python development",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
         "matched_term": "Python",
         "canonical_skill": "Python",
@@ -633,12 +1192,38 @@
         "evidence_strength": "Listed Only",
         "matching_method": "Exact Canonical",
         "explanation": "Direct exact canonical of 'Python' located in Skills section.",
-        "confidence": 0.9
+        "confidence": 0.9,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.739,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Intern looking for software opportunities.",
+            "section": "Summary",
+            "similarity": 0.653,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Software Intern | email: morgan.vance@example.com | (555) 019-2834",
+            "section": "General",
+            "similarity": 0.623,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_2",
         "requirement_text": "Strong expertise in Natural Language Processing (NLP) or Deep Learning",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "Natural Language Processing",
@@ -647,13 +1232,39 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.623,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Intern looking for software opportunities.",
+            "section": "Summary",
+            "similarity": 0.588,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Software Intern | email: morgan.vance@example.com | (555) 019-2834",
+            "section": "General",
+            "similarity": 0.553,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_3",
         "requirement_text": "Hands-on proficiency with PyTorch or TensorFlow frameworks",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Partial Evidence",
         "matched_term": "Python...",
         "canonical_skill": "TensorFlow",
@@ -663,27 +1274,86 @@
         "evidence_strength": "Listed Only",
         "matching_method": "Semantic (Partial)",
         "explanation": "Moderate semantic similarity (0.67) indicates partial evidence, but lacks specific confirmation.",
-        "confidence": 0.54
+        "confidence": 0.54,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.3,
+        "evidence_passages": [
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.669,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Intern looking for software opportunities.",
+            "section": "Summary",
+            "similarity": 0.598,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Software Intern | email: morgan.vance@example.com | (555) 019-2834",
+            "section": "General",
+            "similarity": 0.559,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_4",
         "requirement_text": "Experience deploying microservices with Docker and Kubernetes",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "Kubernetes",
-        "evidence_sentence": null,
-        "resume_section": null,
+        "evidence_sentence": "Intern looking for software opportunities.",
+        "resume_section": "Summary",
         "similarity_score": 0.0,
         "evidence_strength": "None",
-        "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "matching_method": "Compound ALL_OF (0/2)",
+        "explanation": "None of the 2 required components were found.",
+        "confidence": 0.0,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ALL_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Intern looking for software opportunities.",
+            "section": "Summary",
+            "similarity": 0.585,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Software Intern | email: morgan.vance@example.com | (555) 019-2834",
+            "section": "General",
+            "similarity": 0.528,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.487,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {
+          "Experience deploying microservices with Docker": {
+            "matched": false
+          },
+          "Kubernetes": {
+            "matched": false
+          }
+        }
       },
       {
         "requirement_id": "req_5",
         "requirement_text": "Relational database experience with PostgreSQL",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "PostgreSQL",
@@ -692,23 +1362,75 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.559,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Intern looking for software opportunities.",
+            "section": "Summary",
+            "similarity": 0.543,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "High School Diploma, Central High (2022)",
+            "section": "Education",
+            "similarity": 0.454,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_6",
         "requirement_text": "Bachelor's or Master's in Computer Science or related field",
-        "priority": "Required",
-        "classification": "Not Found",
-        "matched_term": null,
-        "canonical_skill": null,
-        "evidence_sentence": null,
-        "resume_section": null,
-        "similarity_score": 0.0,
-        "evidence_strength": "None",
-        "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "priority": "Mandatory",
+        "classification": "Exact Match",
+        "matched_term": "High School Diploma, Central High (2022)",
+        "canonical_skill": "Education",
+        "evidence_sentence": "High School Diploma, Central High (2022)",
+        "resume_section": "Education",
+        "similarity_score": 1.0,
+        "evidence_strength": "Experience Evidence",
+        "matching_method": "Education Verification",
+        "explanation": "Candidate satisfies education requirement with: 'High School Diploma, Central High (2022)'.",
+        "confidence": 0.98,
+        "weight": 0.1333,
+        "req_type": "Education",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Intern looking for software opportunities.",
+            "section": "Summary",
+            "similarity": 0.62,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "High School Diploma, Central High (2022)",
+            "section": "Education",
+            "similarity": 0.613,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.581,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_7",
@@ -722,8 +1444,34 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Intern looking for software opportunities.",
+            "section": "Summary",
+            "similarity": 0.63,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.627,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Software Intern | email: morgan.vance@example.com | (555) 019-2834",
+            "section": "General",
+            "similarity": 0.527,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_8",
@@ -737,8 +1485,34 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Intern looking for software opportunities.",
+            "section": "Summary",
+            "similarity": 0.602,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.567,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Software Intern | email: morgan.vance@example.com | (555) 019-2834",
+            "section": "General",
+            "similarity": 0.527,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_9",
@@ -752,30 +1526,84 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Python",
+            "section": "Skills",
+            "similarity": 0.612,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Intern looking for software opportunities.",
+            "section": "Summary",
+            "similarity": 0.522,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "High School Diploma, Central High (2022)",
+            "section": "Education",
+            "similarity": 0.516,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       }
     ],
     "evidence_breakdown": [
       {
         "requirement": "4+ years of professional experience in Python development",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Exact Match",
         "evidence_sentence": "Python",
         "section": "Skills",
         "strength": "Listed Only",
         "method": "Exact Canonical",
-        "explanation": "Direct exact canonical of 'Python' located in Skills section."
+        "explanation": "Direct exact canonical of 'Python' located in Skills section.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       },
       {
         "requirement": "Hands-on proficiency with PyTorch or TensorFlow frameworks",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Partial Evidence",
         "evidence_sentence": "Python",
         "section": "Skills",
         "strength": "Listed Only",
         "method": "Semantic (Partial)",
-        "explanation": "Moderate semantic similarity (0.67) indicates partial evidence, but lacks specific confirmation."
+        "explanation": "Moderate semantic similarity (0.67) indicates partial evidence, but lacks specific confirmation.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 0.3
+      },
+      {
+        "requirement": "Experience deploying microservices with Docker and Kubernetes",
+        "priority": "Mandatory",
+        "classification": "Not Found",
+        "evidence_sentence": "Intern looking for software opportunities.",
+        "section": "Summary",
+        "strength": "None",
+        "method": "Compound ALL_OF (0/2)",
+        "explanation": "None of the 2 required components were found.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 0.0
+      },
+      {
+        "requirement": "Bachelor's or Master's in Computer Science or related field",
+        "priority": "Mandatory",
+        "classification": "Exact Match",
+        "evidence_sentence": "High School Diploma, Central High (2022)",
+        "section": "Education",
+        "strength": "Experience Evidence",
+        "method": "Education Verification",
+        "explanation": "Candidate satisfies education requirement with: 'High School Diploma, Central High (2022)'.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       }
     ]
   },
@@ -793,48 +1621,59 @@
       "warnings": []
     },
     "verified_experience": {
-      "verified_years": 4.8,
+      "verified_years": 6.8,
       "employment_periods": [
         {
           "start": 2020.0,
-          "end": 2024.75,
-          "duration_years": 4.8
+          "end": 2026.83,
+          "duration_years": 6.8
         }
       ],
-      "timeline_summary": "4.8 verified years across 1 non-overlapping period(s)."
+      "timeline_summary": "6.8 verified years across 1 non-overlapping period(s)."
     },
     "job_position": "Senior AI & Machine Learning Engineer",
     "evaluation_summary": {
-      "overall_score": 0.0,
-      "essential_coverage_pct": 0.0,
+      "overall_score": 16.7,
+      "essential_coverage_pct": 16.7,
       "preferred_coverage_pct": 0.0,
-      "practical_evidence_score": 0.0,
+      "practical_evidence_score": 61.0,
       "experience_duration_score": 100.0,
       "project_depth_score": 0.0,
       "unsupported_keyword_penalty": 0.0,
-      "verified_tenure_years": 4.8,
+      "verified_tenure_years": 6.8,
       "min_years_required": 4.0,
       "recommendation": "Not Recommended",
       "total_essential_count": 6,
-      "matched_essential_count": 0,
+      "matched_essential_count": 1,
       "total_preferred_count": 3,
       "matched_preferred_count": 0,
       "transferable_skills": [],
       "is_low_confidence_extraction": false,
-      "score_breakdown_formula": "Overall = (0.0% \u00d7 0.45) + (0.0% \u00d7 0.15) + (0.0% \u00d7 0.15) + (100.0% \u00d7 0.15) + (0.0% \u00d7 0.10) = 0.0/100",
-      "decision_rationale": "Not Recommended: Missing critical mandatory requirements (4+ years of professional experience in Python development, Strong expertise in Natural Language Processing (NLP) or Deep Learning, Hands-on proficiency with PyTorch or TensorFlow frameworks). General technical experience or unrelated skills cannot compensate for missing core job competencies. Matched 0/6 essential requirements (0.0% coverage; 0 demonstrated in work/projects, 0 listed-only). Practical evidence: 0.0%. Project quality: 0.0%. Verified tenure: 4.8 yrs. Missing mandatory requirements: 4+ years of professional experience in Python development, Strong expertise in Natural Language Processing (NLP) or Deep Learning, Hands-on proficiency with PyTorch or TensorFlow frameworks.",
+      "score_breakdown_formula": "Overall = 16.7/100 [Dynamic JD Criteria: 16.7% Essential, 61.0% Practical Evidence, 0.0% Project Depth]",
+      "decision_rationale": "Not Recommended: Missing critical mandatory requirements (4+ years of professional experience in Python development, Strong expertise in Natural Language Processing (NLP) or Deep Learning, Hands-on proficiency with PyTorch or TensorFlow frameworks). General technical experience cannot compensate for missing core competencies. Matched 1/6 essential requirements (16.7% coverage; 1 demonstrated, 0 listed-only). Practical evidence: 61.0%. Project quality: 0.0%. Verified tenure: 6.8 yrs (Required by JD: 4.0 yrs). Missing mandatory requirements: 4+ years of professional experience in Python development, Strong expertise in Natural Language Processing (NLP) or Deep Learning, Hands-on proficiency with PyTorch or TensorFlow frameworks.",
       "llm_score": null,
       "llm_recommendation": null,
       "llm_synthesis": null,
-      "required_coverage_pct": 0.0,
-      "evidence_quality_score": 0.0,
+      "dynamic_criteria_scores": {
+        "req_1": 0.0,
+        "req_2": 0.0,
+        "req_3": 0.0,
+        "req_4": 0.0,
+        "req_5": 0.0,
+        "req_6": 100.0,
+        "req_7": 0.0,
+        "req_8": 0.0,
+        "req_9": 0.0
+      },
+      "required_coverage_pct": 16.7,
+      "evidence_quality_score": 61.0,
       "experience_relevance_score": 100.0,
       "total_required_count": 6,
-      "matched_required_count": 0
+      "matched_required_count": 1
     },
     "llm_evaluation": null,
     "skills_analysis": {
-      "matched_required_count": 0,
+      "matched_required_count": 1,
       "total_required_count": 6,
       "matched_preferred_count": 0,
       "total_preferred_count": 3,
@@ -844,7 +1683,7 @@
       {
         "requirement_id": "req_1",
         "requirement_text": "4+ years of professional experience in Python development",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "Python",
@@ -853,13 +1692,39 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "running high-ROI PPC campaigns, and managing enterprise CRM pipelines.",
+            "section": "Summary",
+            "similarity": 0.603,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Automated lead scoring and nurturing workflows, generating 400+ qualified B2B leads per quarter.",
+            "section": "Projects",
+            "similarity": 0.595,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "Results-driven Digital Marketing and B2B Sales Specialist with 5 years experience scaling organic search traffic,",
+            "section": "Summary",
+            "similarity": 0.594,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_2",
         "requirement_text": "Strong expertise in Natural Language Processing (NLP) or Deep Learning",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "Natural Language Processing",
@@ -868,13 +1733,39 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Search Engine Optimization (SEO)",
+            "section": "Skills",
+            "similarity": 0.639,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Automated lead scoring and nurturing workflows, generating 400+ qualified B2B leads per quarter.",
+            "section": "Projects",
+            "similarity": 0.628,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "running high-ROI PPC campaigns, and managing enterprise CRM pipelines.",
+            "section": "Summary",
+            "similarity": 0.628,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_3",
         "requirement_text": "Hands-on proficiency with PyTorch or TensorFlow frameworks",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "TensorFlow",
@@ -883,28 +1774,87 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Automated lead scoring and nurturing workflows, generating 400+ qualified B2B leads per quarter.",
+            "section": "Projects",
+            "similarity": 0.62,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "Salesforce",
+            "section": "Skills",
+            "similarity": 0.602,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "running high-ROI PPC campaigns, and managing enterprise CRM pipelines.",
+            "section": "Summary",
+            "similarity": 0.591,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_4",
         "requirement_text": "Experience deploying microservices with Docker and Kubernetes",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "Kubernetes",
-        "evidence_sentence": null,
-        "resume_section": null,
+        "evidence_sentence": "running high-ROI PPC campaigns, and managing enterprise CRM pipelines.",
+        "resume_section": "Summary",
         "similarity_score": 0.0,
         "evidence_strength": "None",
-        "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "matching_method": "Compound ALL_OF (0/2)",
+        "explanation": "None of the 2 required components were found.",
+        "confidence": 0.0,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ALL_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "running high-ROI PPC campaigns, and managing enterprise CRM pipelines.",
+            "section": "Summary",
+            "similarity": 0.607,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Salesforce",
+            "section": "Skills",
+            "similarity": 0.601,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Management (CRM)",
+            "section": "Skills",
+            "similarity": 0.592,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {
+          "Experience deploying microservices with Docker": {
+            "matched": false
+          },
+          "Kubernetes": {
+            "matched": false
+          }
+        }
       },
       {
         "requirement_id": "req_5",
         "requirement_text": "Relational database experience with PostgreSQL",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "PostgreSQL",
@@ -913,23 +1863,75 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Customer Relationship",
+            "section": "Skills",
+            "similarity": 0.594,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "running high-ROI PPC campaigns, and managing enterprise CRM pipelines.",
+            "section": "Summary",
+            "similarity": 0.585,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Automated lead scoring and nurturing workflows, generating 400+ qualified B2B leads per quarter.",
+            "section": "Projects",
+            "similarity": 0.574,
+            "strength": "Strong Implementation"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_6",
         "requirement_text": "Bachelor's or Master's in Computer Science or related field",
-        "priority": "Required",
-        "classification": "Not Found",
-        "matched_term": null,
-        "canonical_skill": null,
-        "evidence_sentence": null,
-        "resume_section": null,
-        "similarity_score": 0.0,
-        "evidence_strength": "None",
-        "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "priority": "Mandatory",
+        "classification": "Exact Match",
+        "matched_term": "Bachelor of Arts in Communications and Marketing, Boston University (2019)",
+        "canonical_skill": "Education",
+        "evidence_sentence": "Bachelor of Arts in Communications and Marketing, Boston University (2019)",
+        "resume_section": "Education",
+        "similarity_score": 1.0,
+        "evidence_strength": "Experience Evidence",
+        "matching_method": "Education Verification",
+        "explanation": "Candidate satisfies education requirement with: 'Bachelor of Arts in Communications and Marketing, Boston University (2019)'.",
+        "confidence": 0.98,
+        "weight": 0.1333,
+        "req_type": "Education",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Bachelor of Arts in Communications and Marketing, Boston University (2019)",
+            "section": "Education",
+            "similarity": 0.639,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Management (CRM)",
+            "section": "Skills",
+            "similarity": 0.567,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Search Engine Optimization (SEO)",
+            "section": "Skills",
+            "similarity": 0.556,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_7",
@@ -943,8 +1945,34 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "running high-ROI PPC campaigns, and managing enterprise CRM pipelines.",
+            "section": "Summary",
+            "similarity": 0.633,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Salesforce",
+            "section": "Skills",
+            "similarity": 0.599,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Automated lead scoring and nurturing workflows, generating 400+ qualified B2B leads per quarter.",
+            "section": "Projects",
+            "similarity": 0.592,
+            "strength": "Strong Implementation"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_8",
@@ -958,8 +1986,34 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "running high-ROI PPC campaigns, and managing enterprise CRM pipelines.",
+            "section": "Summary",
+            "similarity": 0.62,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Inbound Lead Funnel Revamp (Salesforce CRM, Hubspot)",
+            "section": "Projects",
+            "similarity": 0.611,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Salesforce",
+            "section": "Skills",
+            "similarity": 0.584,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_9",
@@ -973,11 +2027,62 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Search Engine Optimization (SEO)",
+            "section": "Skills",
+            "similarity": 0.618,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "running high-ROI PPC campaigns, and managing enterprise CRM pipelines.",
+            "section": "Summary",
+            "similarity": 0.578,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Automated lead scoring and nurturing workflows, generating 400+ qualified B2B leads per quarter.",
+            "section": "Projects",
+            "similarity": 0.572,
+            "strength": "Strong Implementation"
+          }
+        ],
+        "component_matches": {}
       }
     ],
-    "evidence_breakdown": []
+    "evidence_breakdown": [
+      {
+        "requirement": "Experience deploying microservices with Docker and Kubernetes",
+        "priority": "Mandatory",
+        "classification": "Not Found",
+        "evidence_sentence": "running high-ROI PPC campaigns, and managing enterprise CRM pipelines.",
+        "section": "Summary",
+        "strength": "None",
+        "method": "Compound ALL_OF (0/2)",
+        "explanation": "None of the 2 required components were found.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 0.0
+      },
+      {
+        "requirement": "Bachelor's or Master's in Computer Science or related field",
+        "priority": "Mandatory",
+        "classification": "Exact Match",
+        "evidence_sentence": "Bachelor of Arts in Communications and Marketing, Boston University (2019)",
+        "section": "Education",
+        "strength": "Experience Evidence",
+        "method": "Education Verification",
+        "explanation": "Candidate satisfies education requirement with: 'Bachelor of Arts in Communications and Marketing, Boston University (2019)'.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
+      }
+    ]
   },
   {
     "candidate_name": "Taylor Reed",
@@ -993,44 +2098,55 @@
       "warnings": []
     },
     "verified_experience": {
-      "verified_years": 3.8,
+      "verified_years": 5.8,
       "employment_periods": [
         {
           "start": 2021.0,
-          "end": 2024.75,
-          "duration_years": 3.8
+          "end": 2026.83,
+          "duration_years": 5.8
         }
       ],
-      "timeline_summary": "3.8 verified years across 1 non-overlapping period(s)."
+      "timeline_summary": "5.8 verified years across 1 non-overlapping period(s)."
     },
     "job_position": "Senior AI & Machine Learning Engineer",
     "evaluation_summary": {
-      "overall_score": 5.0,
-      "essential_coverage_pct": 5.0,
+      "overall_score": 16.7,
+      "essential_coverage_pct": 16.7,
       "preferred_coverage_pct": 0.0,
-      "practical_evidence_score": 0.0,
-      "experience_duration_score": 95.0,
+      "practical_evidence_score": 61.0,
+      "experience_duration_score": 100.0,
       "project_depth_score": 0.0,
       "unsupported_keyword_penalty": 0.0,
-      "verified_tenure_years": 3.8,
+      "verified_tenure_years": 5.8,
       "min_years_required": 4.0,
       "recommendation": "Not Recommended",
       "total_essential_count": 6,
-      "matched_essential_count": 0,
+      "matched_essential_count": 1,
       "total_preferred_count": 3,
       "matched_preferred_count": 0,
       "transferable_skills": [],
       "is_low_confidence_extraction": false,
-      "score_breakdown_formula": "Overall = (5.0% \u00d7 0.45) + (0.0% \u00d7 0.15) + (0.0% \u00d7 0.15) + (95.0% \u00d7 0.15) + (0.0% \u00d7 0.10) = 5.0/100",
-      "decision_rationale": "Not Recommended: Missing critical mandatory requirements (4+ years of professional experience in Python development, Strong expertise in Natural Language Processing (NLP) or Deep Learning, Hands-on proficiency with PyTorch or TensorFlow frameworks). General technical experience or unrelated skills cannot compensate for missing core job competencies. Matched 0/6 essential requirements (5.0% coverage; 0 demonstrated in work/projects, 0 listed-only). Practical evidence: 0.0%. Project quality: 0.0%. Verified tenure: 3.8 yrs. Missing mandatory requirements: 4+ years of professional experience in Python development, Strong expertise in Natural Language Processing (NLP) or Deep Learning, Hands-on proficiency with PyTorch or TensorFlow frameworks.",
+      "score_breakdown_formula": "Overall = 16.7/100 [Dynamic JD Criteria: 16.7% Essential, 61.0% Practical Evidence, 0.0% Project Depth]",
+      "decision_rationale": "Not Recommended: Missing critical mandatory requirements (4+ years of professional experience in Python development, Strong expertise in Natural Language Processing (NLP) or Deep Learning, Hands-on proficiency with PyTorch or TensorFlow frameworks). General technical experience cannot compensate for missing core competencies. Matched 1/6 essential requirements (16.7% coverage; 1 demonstrated, 0 listed-only). Practical evidence: 61.0%. Project quality: 0.0%. Verified tenure: 5.8 yrs (Required by JD: 4.0 yrs). Missing mandatory requirements: 4+ years of professional experience in Python development, Strong expertise in Natural Language Processing (NLP) or Deep Learning, Hands-on proficiency with PyTorch or TensorFlow frameworks.",
       "llm_score": null,
       "llm_recommendation": null,
       "llm_synthesis": null,
-      "required_coverage_pct": 5.0,
-      "evidence_quality_score": 0.0,
-      "experience_relevance_score": 95.0,
+      "dynamic_criteria_scores": {
+        "req_1": 0.0,
+        "req_2": 0.0,
+        "req_3": 0.0,
+        "req_4": 0.0,
+        "req_5": 0.0,
+        "req_6": 100.0,
+        "req_7": 0.0,
+        "req_8": 0.0,
+        "req_9": 0.0
+      },
+      "required_coverage_pct": 16.7,
+      "evidence_quality_score": 61.0,
+      "experience_relevance_score": 100.0,
       "total_required_count": 6,
-      "matched_required_count": 0
+      "matched_required_count": 1
     },
     "llm_evaluation": null,
     "skills_analysis": {
@@ -1044,7 +2160,7 @@
       {
         "requirement_id": "req_1",
         "requirement_text": "4+ years of professional experience in Python development",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "Python",
@@ -1053,13 +2169,39 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Front-end developer with 4 years of experience building responsive, interactive web applications using Angular,",
+            "section": "Summary",
+            "similarity": 0.732,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "TypeScript, and RxJS.",
+            "section": "Summary",
+            "similarity": 0.627,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Passionate about component architecture and UI performance.",
+            "section": "Summary",
+            "similarity": 0.619,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_2",
         "requirement_text": "Strong expertise in Natural Language Processing (NLP) or Deep Learning",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "Natural Language Processing",
@@ -1068,13 +2210,39 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Facilitated bi-weekly sprint planning, daily standups, and retrospectives in Agile Scrum teams.",
+            "section": "Experience",
+            "similarity": 0.625,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Passionate about component architecture and UI performance.",
+            "section": "Summary",
+            "similarity": 0.622,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Agile Methodologies",
+            "section": "Skills",
+            "similarity": 0.621,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_3",
         "requirement_text": "Hands-on proficiency with PyTorch or TensorFlow frameworks",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "TensorFlow",
@@ -1083,28 +2251,87 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Passionate about component architecture and UI performance.",
+            "section": "Summary",
+            "similarity": 0.649,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Agile Methodologies",
+            "section": "Skills",
+            "similarity": 0.628,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Frontend Developer - PixelCraft Studio (2021 - Present)",
+            "section": "Experience",
+            "similarity": 0.628,
+            "strength": "Experience Evidence"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_4",
         "requirement_text": "Experience deploying microservices with Docker and Kubernetes",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "Kubernetes",
-        "evidence_sentence": null,
-        "resume_section": null,
+        "evidence_sentence": "Tracked team velocity and managed backlog epics and bug triage workflows in Jira.",
+        "resume_section": "Experience",
         "similarity_score": 0.0,
         "evidence_strength": "None",
-        "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "matching_method": "Compound ALL_OF (0/2)",
+        "explanation": "None of the 2 required components were found.",
+        "confidence": 0.0,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "ALL_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Tracked team velocity and managed backlog epics and bug triage workflows in Jira.",
+            "section": "Experience",
+            "similarity": 0.65,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "Built enterprise web dashboards using Angular 14 and RxJS state management, serving 200,000 monthly active",
+            "section": "Experience",
+            "similarity": 0.637,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "Agile Methodologies",
+            "section": "Skills",
+            "similarity": 0.636,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {
+          "Experience deploying microservices with Docker": {
+            "matched": false
+          },
+          "Kubernetes": {
+            "matched": false
+          }
+        }
       },
       {
         "requirement_id": "req_5",
         "requirement_text": "Relational database experience with PostgreSQL",
-        "priority": "Required",
+        "priority": "Mandatory",
         "classification": "Not Found",
         "matched_term": null,
         "canonical_skill": "PostgreSQL",
@@ -1113,23 +2340,75 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.1333,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Passionate about component architecture and UI performance.",
+            "section": "Summary",
+            "similarity": 0.62,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Tracked team velocity and managed backlog epics and bug triage workflows in Jira.",
+            "section": "Experience",
+            "similarity": 0.607,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "Agile Methodologies",
+            "section": "Skills",
+            "similarity": 0.597,
+            "strength": "Listed Only"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_6",
         "requirement_text": "Bachelor's or Master's in Computer Science or related field",
-        "priority": "Required",
-        "classification": "Partial Evidence",
-        "matched_term": "Bachelor of Science in Information Techn...",
-        "canonical_skill": null,
+        "priority": "Mandatory",
+        "classification": "Exact Match",
+        "matched_term": "Bachelor of Science in Information Technology, Ohio State University (2020)",
+        "canonical_skill": "Education",
         "evidence_sentence": "Bachelor of Science in Information Technology, Ohio State University (2020)",
         "resume_section": "Education",
-        "similarity_score": 0.684,
-        "evidence_strength": "Listed Only",
-        "matching_method": "Semantic (Partial)",
-        "explanation": "Moderate semantic similarity (0.68) indicates partial evidence, but lacks specific confirmation.",
-        "confidence": 0.55
+        "similarity_score": 1.0,
+        "evidence_strength": "Experience Evidence",
+        "matching_method": "Education Verification",
+        "explanation": "Candidate satisfies education requirement with: 'Bachelor of Science in Information Technology, Ohio State University (2020)'.",
+        "confidence": 0.98,
+        "weight": 0.1333,
+        "req_type": "Education",
+        "matching_logic": "ANY_OF",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 1.0,
+        "evidence_passages": [
+          {
+            "sentence": "Bachelor of Science in Information Technology, Ohio State University (2020)",
+            "section": "Education",
+            "similarity": 0.684,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Passionate about component architecture and UI performance.",
+            "section": "Summary",
+            "similarity": 0.578,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "TypeScript, and RxJS.",
+            "section": "Summary",
+            "similarity": 0.55,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_7",
@@ -1143,8 +2422,34 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Passionate about component architecture and UI performance.",
+            "section": "Summary",
+            "similarity": 0.737,
+            "strength": "Mentioned"
+          },
+          {
+            "sentence": "Tracked team velocity and managed backlog epics and bug triage workflows in Jira.",
+            "section": "Experience",
+            "similarity": 0.726,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "Built enterprise web dashboards using Angular 14 and RxJS state management, serving 200,000 monthly active",
+            "section": "Experience",
+            "similarity": 0.681,
+            "strength": "Strong Implementation"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_8",
@@ -1158,8 +2463,34 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Tracked team velocity and managed backlog epics and bug triage workflows in Jira.",
+            "section": "Experience",
+            "similarity": 0.635,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "Built enterprise web dashboards using Angular 14 and RxJS state management, serving 200,000 monthly active",
+            "section": "Experience",
+            "similarity": 0.63,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "TypeScript, and RxJS.",
+            "section": "Summary",
+            "similarity": 0.62,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       },
       {
         "requirement_id": "req_9",
@@ -1173,20 +2504,60 @@
         "similarity_score": 0.0,
         "evidence_strength": "None",
         "matching_method": "None",
-        "explanation": "No direct, alias, fuzzy, semantic, or related evidence found in resume.",
-        "confidence": 0.95
+        "explanation": "No direct, alias, fuzzy, semantic, compound, or related evidence found in resume.",
+        "confidence": 0.95,
+        "weight": 0.0667,
+        "req_type": "Skill",
+        "matching_logic": "Single",
+        "is_eligibility_condition": false,
+        "fulfillment_ratio": 0.0,
+        "evidence_passages": [
+          {
+            "sentence": "Tracked team velocity and managed backlog epics and bug triage workflows in Jira.",
+            "section": "Experience",
+            "similarity": 0.632,
+            "strength": "Strong Implementation"
+          },
+          {
+            "sentence": "Agile Methodologies",
+            "section": "Skills",
+            "similarity": 0.607,
+            "strength": "Listed Only"
+          },
+          {
+            "sentence": "Passionate about component architecture and UI performance.",
+            "section": "Summary",
+            "similarity": 0.596,
+            "strength": "Mentioned"
+          }
+        ],
+        "component_matches": {}
       }
     ],
     "evidence_breakdown": [
       {
+        "requirement": "Experience deploying microservices with Docker and Kubernetes",
+        "priority": "Mandatory",
+        "classification": "Not Found",
+        "evidence_sentence": "Tracked team velocity and managed backlog epics and bug triage workflows in Jira.",
+        "section": "Experience",
+        "strength": "None",
+        "method": "Compound ALL_OF (0/2)",
+        "explanation": "None of the 2 required components were found.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 0.0
+      },
+      {
         "requirement": "Bachelor's or Master's in Computer Science or related field",
-        "priority": "Required",
-        "classification": "Partial Evidence",
+        "priority": "Mandatory",
+        "classification": "Exact Match",
         "evidence_sentence": "Bachelor of Science in Information Technology, Ohio State University (2020)",
         "section": "Education",
-        "strength": "Listed Only",
-        "method": "Semantic (Partial)",
-        "explanation": "Moderate semantic similarity (0.68) indicates partial evidence, but lacks specific confirmation."
+        "strength": "Experience Evidence",
+        "method": "Education Verification",
+        "explanation": "Candidate satisfies education requirement with: 'Bachelor of Science in Information Technology, Ohio State University (2020)'.",
+        "weight": 0.13333333333333333,
+        "fulfillment_ratio": 1.0
       }
     ]
   }

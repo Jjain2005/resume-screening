@@ -1,24 +1,31 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from enum import Enum
 
 class Recommendation(str, Enum):
     RECOMMENDED_FOR_SELECTION = "Recommended for Selection"
-    MANUAL_REVIEW_REQUIRED = "Manual Review Required"
+    FURTHER_REVIEW = "Further Review"            # Borderline — automated follow-up
     NOT_RECOMMENDED = "Not Recommended"
-    
-    # Backward-compatible aliases for running processes
+    UNABLE_TO_EVALUATE = "Unable to Evaluate"    # Extraction / API failure — system issue only
+
+    # Backward-compatible aliases
     STRONGLY_RECOMMENDED = "Recommended for Selection"
     RECOMMENDED = "Recommended for Selection"
-    BORDERLINE = "Manual Review Required"
+    MANUAL_REVIEW_REQUIRED = "Further Review"    # Legacy alias — maps to FURTHER_REVIEW
+    BORDERLINE = "Further Review"
     LOW_MATCH = "Not Recommended"
 
 @dataclass
 class ScoringWeights:
+    """
+    Universal evaluation weights.
+    In the universal JD-driven engine, requirement weights are derived
+    dynamically from the Job Description itself.
+    """
     essential_skills_weight: float = 0.45
     preferred_skills_weight: float = 0.15
-    practical_evidence_weight: float = 0.15
-    relevant_experience_weight: float = 0.15
+    practical_evidence_weight: float = 0.20
+    relevant_experience_weight: float = 0.10
     project_depth_weight: float = 0.10
     llm_evaluation_weight: float = 0.00
 
@@ -33,7 +40,8 @@ class ScoringWeights:
         # Backward-compatible parameters
         required_skills_weight: Optional[float] = None,
         evidence_depth_weight: Optional[float] = None,
-        experience_project_weight: Optional[float] = None
+        experience_project_weight: Optional[float] = None,
+        **kwargs
     ):
         if required_skills_weight is not None and essential_skills_weight is None:
             self.essential_skills_weight = required_skills_weight
@@ -45,13 +53,13 @@ class ScoringWeights:
         if evidence_depth_weight is not None and practical_evidence_weight is None:
             self.practical_evidence_weight = evidence_depth_weight
         else:
-            self.practical_evidence_weight = practical_evidence_weight if practical_evidence_weight is not None else 0.15
+            self.practical_evidence_weight = practical_evidence_weight if practical_evidence_weight is not None else 0.20
 
         if experience_project_weight is not None and relevant_experience_weight is None:
-            self.relevant_experience_weight = experience_project_weight * 0.6
-            self.project_depth_weight = experience_project_weight * 0.4
+            self.relevant_experience_weight = experience_project_weight * 0.5
+            self.project_depth_weight = experience_project_weight * 0.5
         else:
-            self.relevant_experience_weight = relevant_experience_weight if relevant_experience_weight is not None else 0.15
+            self.relevant_experience_weight = relevant_experience_weight if relevant_experience_weight is not None else 0.10
             self.project_depth_weight = project_depth_weight if project_depth_weight is not None else 0.10
 
         self.llm_evaluation_weight = llm_evaluation_weight if llm_evaluation_weight is not None else 0.00
@@ -68,49 +76,8 @@ class ScoringWeights:
     def experience_project_weight(self) -> float:
         return self.relevant_experience_weight + self.project_depth_weight
 
-    @classmethod
-    def intern_mode(cls, with_llm: bool = True) -> "ScoringWeights":
-        """
-        Preset for Interns / Freshers:
-        - Essential Skills: 25%
-        - LLM Qualitative Evaluation: 30%
-        - Practical Evidence: 20%
-        - Project Implementation: 15%
-        - Preferred Skills: 10%
-        - Work Experience Duration: 0%
-        """
-        if with_llm:
-            return cls(
-                essential_skills_weight=0.25,
-                preferred_skills_weight=0.10,
-                practical_evidence_weight=0.20,
-                relevant_experience_weight=0.00,
-                project_depth_weight=0.15,
-                llm_evaluation_weight=0.30
-            )
-        else:
-            return cls(
-                essential_skills_weight=0.50,
-                preferred_skills_weight=0.10,
-                practical_evidence_weight=0.25,
-                relevant_experience_weight=0.00,
-                project_depth_weight=0.15,
-                llm_evaluation_weight=0.00
-            )
-
-    @classmethod
-    def experienced_mode(cls) -> "ScoringWeights":
-        """Balanced preset for experienced candidates."""
-        return cls(
-            essential_skills_weight=0.30,
-            preferred_skills_weight=0.10,
-            practical_evidence_weight=0.15,
-            relevant_experience_weight=0.15,
-            project_depth_weight=0.10,
-            llm_evaluation_weight=0.20
-        )
-
     def validate(self):
+        """Validates weights sum close to 1.0."""
         total = (
             self.essential_skills_weight
             + self.preferred_skills_weight
@@ -119,8 +86,15 @@ class ScoringWeights:
             + self.project_depth_weight
             + self.llm_evaluation_weight
         )
-        if abs(total - 1.0) > 0.02:
-            raise ValueError(f"Scoring weights must sum to 1.0, got {total:.3f}")
+        if abs(total - 1.0) > 0.05:
+            # Rescale weights proportionally to ensure sum is exactly 1.0
+            if total > 0:
+                self.essential_skills_weight /= total
+                self.preferred_skills_weight /= total
+                self.practical_evidence_weight /= total
+                self.relevant_experience_weight /= total
+                self.project_depth_weight /= total
+                self.llm_evaluation_weight /= total
 
 @dataclass
 class CandidateEvaluation:
@@ -145,6 +119,14 @@ class CandidateEvaluation:
     min_years_required: Optional[float] = None
     transferable_skills: List[Dict[str, str]] = field(default_factory=list)
     is_low_confidence_extraction: bool = False
+    is_system_failure: bool = False
+    total_mandatory_count: int = 0
+    matched_mandatory_count: int = 0
+    total_core_count: int = 0
+    matched_core_count: int = 0
+    demonstrated_essential_count: int = 0
+    listed_only_essential_count: int = 0
+    dynamic_criteria_scores: Dict[str, float] = field(default_factory=dict)
 
     # Backward-compatible property accessors
     @property
@@ -185,11 +167,19 @@ class CandidateEvaluation:
             "matched_preferred_count": self.matched_preferred_count,
             "transferable_skills": self.transferable_skills,
             "is_low_confidence_extraction": self.is_low_confidence_extraction,
+            "is_system_failure": self.is_system_failure,
+            "total_mandatory_count": self.total_mandatory_count,
+            "matched_mandatory_count": self.matched_mandatory_count,
+            "total_core_count": self.total_core_count,
+            "matched_core_count": self.matched_core_count,
+            "demonstrated_essential_count": self.demonstrated_essential_count,
+            "listed_only_essential_count": self.listed_only_essential_count,
             "score_breakdown_formula": self.score_breakdown_formula,
             "decision_rationale": self.decision_rationale,
             "llm_score": round(self.llm_score, 1) if self.llm_score is not None else None,
             "llm_recommendation": self.llm_recommendation,
             "llm_synthesis": self.llm_synthesis,
+            "dynamic_criteria_scores": self.dynamic_criteria_scores,
             # Legacy keys for backward compatibility
             "required_coverage_pct": round(self.essential_coverage_pct, 1),
             "evidence_quality_score": round(self.practical_evidence_score, 1),

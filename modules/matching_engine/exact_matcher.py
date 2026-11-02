@@ -46,18 +46,35 @@ class ExactMatcher:
             if target_skill.lower() != canonical.lower():
                 terms_to_check.append((target_skill, "Exact Alias"))
 
-        # Search prioritized sections first: EXPERIENCE, PROJECTS, SKILLS, then others
-        ordered_sentences = self._prioritize_sentences(resume.all_sentences)
+        priority_order = {"Experience": 1, "Projects": 2, "Summary": 3, "Achievements": 4, "Skills": 5, "General": 6, "Education": 7, "Certifications": 8}
+        ordered_sentences = sorted(resume.all_sentences, key=lambda s: priority_order.get(s.section.value, 99))
 
+        matching_hits = []
         for term, match_type in terms_to_check:
             pattern = word_boundary_regex(term)
             for sentence in ordered_sentences:
                 if pattern.search(sentence.text):
-                    return (term, match_type, sentence)
+                    matching_hits.append((term, match_type, sentence))
+
+        if matching_hits:
+            from .contextual_matcher import ContextualMatcher
+            from .models import EvidenceStrength
+            strength_ranks = {
+                EvidenceStrength.STRONG_IMPLEMENTATION: 5,
+                EvidenceStrength.EXPERIENCE_EVIDENCE: 4,
+                EvidenceStrength.PROJECT_EVIDENCE: 3,
+                EvidenceStrength.MENTIONED: 2,
+                EvidenceStrength.LISTED_ONLY: 1,
+                EvidenceStrength.NONE: 0
+            }
+            # Select the sentence with the highest practical evidence strength
+            best_hit = max(
+                matching_hits,
+                key=lambda h: (
+                    strength_ranks.get(ContextualMatcher.evaluate_evidence_strength(h[2]), 0),
+                    -priority_order.get(h[2].section.value, 99)
+                )
+            )
+            return best_hit
 
         return None
-
-    def _prioritize_sentences(self, sentences: List[EvidenceSentence]) -> List[EvidenceSentence]:
-        # Experience and Projects contain higher quality evidence than raw lists
-        priority_order = {"Experience": 1, "Projects": 2, "Summary": 3, "Achievements": 4, "Skills": 5, "General": 6, "Education": 7, "Certifications": 8}
-        return sorted(sentences, key=lambda s: priority_order.get(s.section.value, 99))

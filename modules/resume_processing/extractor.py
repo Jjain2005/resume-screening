@@ -1,6 +1,7 @@
 import re
 import os
 import io
+from datetime import datetime
 from typing import List, Dict, Tuple, Optional, Union
 import fitz  # PyMuPDF
 from PIL import Image
@@ -351,7 +352,8 @@ class ResumeExtractor:
             "aug": 7, "august": 7, "sep": 8, "sept": 8, "september": 8,
             "oct": 9, "october": 9, "nov": 10, "november": 10, "dec": 11, "december": 11
         }
-        current_year_float = 2024.75  # Late 2024 baseline for "Present / Current"
+        now = datetime.now()
+        current_year_float = now.year + (now.month - 1) / 12.0  # Dynamic current date baseline for "Present / Current"
 
         # Academic / study indicators to strictly ignore
         academic_filter_regex = re.compile(

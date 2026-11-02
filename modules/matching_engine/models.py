@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from enum import Enum
 from ..resume_processing.models import SectionType
 
@@ -24,7 +24,7 @@ class EvidenceStrength(str, Enum):
 class RequirementMatchResult:
     requirement_id: str
     requirement_text: str
-    priority: str                       # Required / Preferred
+    priority: str                       # Mandatory / Preferred / Optional
     classification: MatchClassification
     matched_term: Optional[str] = None
     canonical_skill: Optional[str] = None
@@ -32,9 +32,16 @@ class RequirementMatchResult:
     resume_section: Optional[SectionType] = None
     similarity_score: float = 0.0       # 0.0 to 1.0
     evidence_strength: EvidenceStrength = EvidenceStrength.NONE
-    matching_method: str = "None"       # Exact Canonical, Exact Alias, Fuzzy, Semantic, Related Skill
+    matching_method: str = "None"       # Exact Canonical, Exact Alias, Fuzzy, Semantic, Compound
     explanation: str = ""
     confidence: float = 0.0             # 0.0 to 1.0
+    weight: float = 0.0                 # Dynamic normalized weight from JD
+    req_type: str = "Skill"
+    matching_logic: str = "Single"      # Single, ALL_OF, ANY_OF
+    is_eligibility_condition: bool = False
+    fulfillment_ratio: float = 0.0      # 0.0 to 1.0
+    evidence_passages: List[Dict[str, Any]] = field(default_factory=list)
+    component_matches: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -50,5 +57,12 @@ class RequirementMatchResult:
             "evidence_strength": self.evidence_strength.value,
             "matching_method": self.matching_method,
             "explanation": self.explanation,
-            "confidence": round(self.confidence, 3)
+            "confidence": round(self.confidence, 3),
+            "weight": round(self.weight, 4),
+            "req_type": self.req_type,
+            "matching_logic": self.matching_logic,
+            "is_eligibility_condition": self.is_eligibility_condition,
+            "fulfillment_ratio": round(self.fulfillment_ratio, 3),
+            "evidence_passages": self.evidence_passages,
+            "component_matches": self.component_matches
         }

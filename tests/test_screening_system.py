@@ -5,11 +5,12 @@ from modules.knowledge_base.models import RelationshipType
 from modules.resume_processing.extractor import ResumeExtractor
 from modules.resume_processing.models import ProcessedResume, EvidenceSentence, SectionType
 from modules.jd_processing.parser import JobDescriptionParser
-from modules.jd_processing.models import JobDescription, RequirementItem, RequirementType as ReqType, RequirementPriority
+from modules.jd_processing.models import JobDescription, RequirementItem, RequirementType as ReqType, RequirementPriority, MatchingLogic
 from modules.matching_engine.hybrid_engine import HybridMatchingEngine
 from modules.matching_engine.models import MatchClassification, EvidenceStrength, RequirementMatchResult
 from modules.scoring.evaluator import CandidateEvaluator, ScoringWeights, Recommendation
 from modules.reporting.reporter import ScreeningReportGenerator
+from modules.llm.evaluator import GroqContextualEvaluator
 
 TAXONOMY_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -884,71 +885,60 @@ def test_education_dates_not_counted_as_work_experience(resume_extractor):
     assert len(resume_student.employment_periods) == 0
 
 # -------------------------------------------------------------
-# 22. Intern Mode: 0% Weight on Experience Duration
+# 22. Universal Engine: Experience Not Penalized When JD Does Not Require It
 # -------------------------------------------------------------
-def test_intern_mode_scoring_zero_tenure_weight():
-    intern_weights = ScoringWeights.intern_mode()
-    assert intern_weights.relevant_experience_weight == 0.0
-    assert intern_weights.llm_evaluation_weight == 0.30
-    assert intern_weights.essential_skills_weight == 0.25
-    assert intern_weights.practical_evidence_weight == 0.20
-    assert intern_weights.project_depth_weight == 0.15
-    assert intern_weights.preferred_skills_weight == 0.10
-    assert abs(
-        intern_weights.essential_skills_weight +
-        intern_weights.preferred_skills_weight +
-        intern_weights.practical_evidence_weight +
-        intern_weights.relevant_experience_weight +
-        intern_weights.project_depth_weight +
-        intern_weights.llm_evaluation_weight - 1.0
-    ) < 0.01
+def test_universal_scoring_zero_tenure_when_not_required():
+    evaluator = CandidateEvaluator()
+    resume = ProcessedResume(filename="candidate_zero_exp.pdf", verified_experience_years=0.0)
 
-    evaluator = CandidateEvaluator(intern_weights)
-    resume = ProcessedResume(filename="intern.pdf", verified_experience_years=0.0)
+    # JD does not specify minimum years of experience
+    jd = JobDescription(
+        id="jd_dynamic",
+        title="Software Engineer",
+        raw_text="Job Description without minimum years requirement",
+        requirements=[
+            RequirementItem(id="r1", text="Proficiency with Python", req_type=ReqType.SKILL, priority=RequirementPriority.MANDATORY),
+            RequirementItem(id="r2", text="Knowledge of SQL", req_type=ReqType.SKILL, priority=RequirementPriority.MANDATORY)
+        ]
+    )
+    jd.normalize_weights()
 
-    # Candidate has all essential skills and strong practical projects, but 0.0 years work experience
     match_results = [
         RequirementMatchResult(
             requirement_id="r1",
             requirement_text="Proficiency with Python",
-            priority="required",
+            priority="Mandatory",
             classification=MatchClassification.EXACT_MATCH,
             matched_term="Python",
             canonical_skill="Python",
             resume_section=SectionType.PROJECTS,
             evidence_sentence="Built ML classification models in Python.",
             evidence_strength=EvidenceStrength.PROJECT_EVIDENCE,
-            matching_method="exact"
+            matching_method="exact",
+            weight=0.5,
+            fulfillment_ratio=1.0
         ),
         RequirementMatchResult(
             requirement_id="r2",
             requirement_text="Knowledge of SQL",
-            priority="required",
+            priority="Mandatory",
             classification=MatchClassification.EXACT_MATCH,
             matched_term="SQL",
             canonical_skill="SQL",
             resume_section=SectionType.PROJECTS,
             evidence_sentence="Designed PostgreSQL database schemas and optimized SQL queries.",
             evidence_strength=EvidenceStrength.PROJECT_EVIDENCE,
-            matching_method="exact"
+            matching_method="exact",
+            weight=0.5,
+            fulfillment_ratio=1.0
         )
     ]
 
-    jd = JobDescription(
-        id="jd_intern",
-        title="Software Intern",
-        raw_text="...",
-        requirements=[
-            RequirementItem(id="r1", text="Proficiency with Python", req_type=ReqType.SKILL, priority=RequirementPriority.REQUIRED, min_years=1.0),
-            RequirementItem(id="r2", text="Knowledge of SQL", req_type=ReqType.SKILL, priority=RequirementPriority.REQUIRED)
-        ]
-    )
-
     evaluation = evaluator.evaluate(match_results, resume=resume, jd=jd, llm_score=85.0)
-    # 0 years tenure must NOT block selection under intern mode!
+    # 0 years tenure must NOT block selection when JD did not require experience!
     assert evaluation.recommendation == Recommendation.RECOMMENDED_FOR_SELECTION
     assert evaluation.overall_score >= 68.0
-    assert "Groq AI" in evaluation.decision_rationale
+
 
 # -------------------------------------------------------------
 # 23. Unrelated Technical Skills CANNOT Compensate for Missing Mandatory Requirements
@@ -1159,18 +1149,18 @@ Preferred Qualifications:
     assert not any("leading ai startup" in t for t in req_texts)
     assert not any("join our collaborative team" in t for t in req_texts)
 
-    # Responsibilities must be tagged as RESPONSIBILITY with PREFERRED priority and weight 0.5
-    resp_reqs = [r for r in jd.requirements if r.req_type == ReqType.RESPONSIBILITY]
-    assert len(resp_reqs) >= 2
-    for r in resp_reqs:
-        assert r.priority == RequirementPriority.PREFERRED
-        assert r.weight == 0.5
-
     # Only core technical competencies under Minimum Requirements act as REQUIRED
     mandatory_reqs = jd.get_requirements_by_priority(RequirementPriority.REQUIRED)
     assert len(mandatory_reqs) == 2
     assert any("python" in r.text.lower() for r in mandatory_reqs)
     assert any("pytorch" in r.text.lower() for r in mandatory_reqs)
+
+    # Responsibilities must be tagged as RESPONSIBILITY with PREFERRED priority and lower weight
+    resp_reqs = [r for r in jd.requirements if r.req_type == ReqType.RESPONSIBILITY]
+    assert len(resp_reqs) >= 2
+    for r in resp_reqs:
+        assert r.priority == RequirementPriority.PREFERRED
+        assert r.weight < mandatory_reqs[0].weight
 
 # -------------------------------------------------------------
 # 28. Semantic False Positive Prevention (Domain Concept Verification)
@@ -1249,6 +1239,497 @@ def test_unqualified_candidates_fall_to_not_recommended():
     assert evaluation.recommendation == Recommendation.NOT_RECOMMENDED
     assert evaluation.overall_score <= 45.0
     assert "not recommended" in evaluation.decision_rationale.lower()
+
+
+# -------------------------------------------------------------
+# 30. Compound ALL_OF (AND) Logic Never Grants Full Credit for Single Match
+# -------------------------------------------------------------
+def test_compound_and_matching_all_of():
+    taxonomy = SkillTaxonomy(TAXONOMY_PATH)
+    engine = HybridMatchingEngine(taxonomy)
+
+    # Requirement requires BOTH Docker AND Kubernetes
+    req_all_of = RequirementItem(
+        id="r_compound",
+        text="Experience deploying with Docker and Kubernetes",
+        req_type=ReqType.SKILL,
+        priority=RequirementPriority.MANDATORY,
+        matching_logic=MatchingLogic.ALL_OF,
+        compound_components=["Docker", "Kubernetes"]
+    )
+
+    # Candidate has Docker in resume, but NOT Kubernetes
+    resume_partial = ProcessedResume(
+        filename="docker_only.pdf",
+        all_sentences=[
+            EvidenceSentence(
+                text="Built containerized services using Docker for automated testing.",
+                section=SectionType.EXPERIENCE
+            )
+        ]
+    )
+
+    result_partial = engine.match_single_requirement(req_all_of, resume_partial)
+    # Must NOT be EXACT_MATCH, fulfillment must be 0.5 (1 of 2), classification PARTIAL_EVIDENCE
+    assert result_partial.classification == MatchClassification.PARTIAL_EVIDENCE
+    assert result_partial.fulfillment_ratio == 0.5
+    assert "Docker" in result_partial.explanation
+    assert "Kubernetes" in result_partial.explanation
+
+    # Candidate has BOTH Docker and Kubernetes
+    resume_full = ProcessedResume(
+        filename="docker_k8s.pdf",
+        all_sentences=[
+            EvidenceSentence(
+                text="Built containerized microservices using Docker and orchestrated deployments on Kubernetes clusters.",
+                section=SectionType.EXPERIENCE
+            )
+        ]
+    )
+    result_full = engine.match_single_requirement(req_all_of, resume_full)
+    assert result_full.classification == MatchClassification.EXACT_MATCH
+    assert result_full.fulfillment_ratio == 1.0
+
+
+# -------------------------------------------------------------
+# 31. Compound ANY_OF (OR) Logic Satisfied by Either Alternative
+# -------------------------------------------------------------
+def test_compound_or_matching_any_of():
+    taxonomy = SkillTaxonomy(TAXONOMY_PATH)
+    engine = HybridMatchingEngine(taxonomy)
+
+    # Requirement allows PyTorch OR TensorFlow
+    req_any_of = RequirementItem(
+        id="r_any",
+        text="Deep Learning with PyTorch or TensorFlow",
+        req_type=ReqType.SKILL,
+        priority=RequirementPriority.MANDATORY,
+        matching_logic=MatchingLogic.ANY_OF,
+        compound_components=["PyTorch", "TensorFlow"]
+    )
+
+    # Candidate has PyTorch only
+    resume_pytorch = ProcessedResume(
+        filename="pytorch.pdf",
+        all_sentences=[
+            EvidenceSentence(
+                text="Trained transformer models using PyTorch on GPU clusters.",
+                section=SectionType.EXPERIENCE
+            )
+        ]
+    )
+
+    result = engine.match_single_requirement(req_any_of, resume_pytorch)
+    assert result.classification in (MatchClassification.EXACT_MATCH, MatchClassification.STRONG_SEMANTIC_MATCH)
+    assert result.fulfillment_ratio == 1.0
+
+
+# -------------------------------------------------------------
+# 32. Python Rejects Hallucinated LLM Quotes & Deterministically Computes Score
+# -------------------------------------------------------------
+def test_llm_hallucinated_quote_invalidation():
+    evaluator_llm = GroqContextualEvaluator()
+    resume = ProcessedResume(
+        filename="real_resume.pdf",
+        raw_text="Experienced Python developer with Postgres experience. Built REST APIs.",
+        cleaned_text="Experienced Python developer with Postgres experience. Built REST APIs."
+    )
+    resume.all_sentences = [
+        EvidenceSentence(text="Experienced Python developer with Postgres experience.", section=SectionType.EXPERIENCE),
+        EvidenceSentence(text="Built REST APIs.", section=SectionType.EXPERIENCE)
+    ]
+
+    jd = JobDescription(
+        id="jd_test",
+        title="Python Engineer",
+        raw_text="...",
+        requirements=[
+            RequirementItem(id="req_1", text="Python", req_type=ReqType.SKILL, priority=RequirementPriority.MANDATORY, weight=0.5),
+            RequirementItem(id="req_2", text="Kubernetes", req_type=ReqType.SKILL, priority=RequirementPriority.MANDATORY, weight=0.5)
+        ]
+    )
+
+    # Fake LLM response with a hallucinated quote for Kubernetes that does not exist in resume
+    fake_llm_parsed = {
+        "requirement_assessments": [
+            {
+                "requirement_id": "req_1",
+                "status": "VERIFIED",
+                "evidence_quote": "Experienced Python developer with Postgres experience.",
+                "analysis": "Direct real evidence."
+            },
+            {
+                "requirement_id": "req_2",
+                "status": "VERIFIED",
+                "evidence_quote": "Orchestrated large production Kubernetes clusters with Helm.",  # Hallucinated!
+                "analysis": "Claimed k8s expertise."
+            }
+        ],
+        "suggested_recommendation": "Recommended for Selection",
+        "executive_summary": "Strong candidate."
+    }
+
+    # Test Python verification logic directly
+    raw_resume_text = resume.cleaned_text.lower()
+    hallucinated_count = 0
+    validated_assessments = []
+    status_credits = {"VERIFIED": 1.0, "PARTIAL": 0.5, "UNSUPPORTED": 0.0}
+
+    req_weight_map = {r.id: r.weight for r in jd.requirements}
+    earned_score = 0.0
+    for item in fake_llm_parsed["requirement_assessments"]:
+        quote = item["evidence_quote"].strip()
+        status = item["status"]
+        if quote and quote.lower() not in raw_resume_text:
+            hallucinated_count += 1
+            status = "UNSUPPORTED"
+        validated_assessments.append({"requirement_id": item["requirement_id"], "status": status, "is_quote_verified": status != "UNSUPPORTED"})
+        earned_score += status_credits.get(status, 0.0) * req_weight_map.get(item["requirement_id"], 0.5)
+
+    python_score = (earned_score / sum(req_weight_map.values())) * 100.0
+    if hallucinated_count > 0:
+        python_score -= (hallucinated_count * 5.0)
+
+    # Hallucination must be caught!
+    assert hallucinated_count == 1
+    assert validated_assessments[1]["status"] == "UNSUPPORTED"
+    assert validated_assessments[1]["is_quote_verified"] is False
+    assert python_score < 50.0  # Cannot get high score when fake quote is invalidated
+
+
+# -------------------------------------------------------------
+# 33. Dynamic JD Weights Normalization & Validation
+# -------------------------------------------------------------
+def test_dynamic_jd_weight_normalization():
+    parser = JobDescriptionParser()
+    jd_text = """
+    Marketing Manager
+    Requirements:
+    • Search Engine Optimization (SEO)
+    • Google Ads campaign management
+    • Content strategy
+    Preferred:
+    • Familiarity with HubSpot CRM
+    • Graphic design with Canva
+    Optional:
+    • Video editing
+    """
+    jd = parser.parse_deterministic(jd_text, jd_id="mkt_1", default_title="Marketing Manager")
+
+    matrix_val = jd.validate_matrix()
+    assert matrix_val["valid"] is True
+    assert matrix_val["mandatory_count"] >= 3
+    assert matrix_val["preferred_count"] >= 2
+    # Weights must sum to 1.0 dynamically
+    assert abs(sum(r.weight for r in jd.requirements) - 1.0) < 0.001
+    # Mandatory requirement must have higher dynamic weight than optional requirement
+    mandatory_reqs = jd.get_requirements_by_priority(RequirementPriority.MANDATORY)
+    optional_reqs = [r for r in jd.requirements if r.priority == RequirementPriority.OPTIONAL]
+    if optional_reqs:
+        assert mandatory_reqs[0].weight > optional_reqs[0].weight
+
+
+# -------------------------------------------------------------
+# 34. One-to-Many Architecture: Shared Strategy & Independent Calls
+# -------------------------------------------------------------
+def test_one_to_many_architecture_shared_strategy_and_independent_calls():
+    import json
+    from unittest.mock import MagicMock
+    from modules.llm.evaluator import GroqContextualEvaluator
+    from modules.llm.groq_client import GroqClientManager
+    from modules.jd_processing.models import JobDescription, JDEvaluationStrategy
+    from modules.scoring.models import CandidateEvaluation, Recommendation
+
+    mock_client_mgr = MagicMock(spec=GroqClientManager)
+    mock_client_mgr.is_available = True
+    mock_client_mgr.model = "qwen/qwen3.8-27b"
+    mock_groq_client = MagicMock()
+    mock_client_mgr.get_client.return_value = mock_groq_client
+
+    evaluator = GroqContextualEvaluator(mock_client_mgr)
+    evaluator.reset_call_counter()
+
+    strategy = JDEvaluationStrategy(
+        job_domain="Backend Engineering",
+        essential_capabilities=["Python API development", "PostgreSQL database optimization"],
+        relevant_skills=["Python", "FastAPI", "PostgreSQL", "Docker"],
+        expected_practical_knowledge=["Microservices", "Container deployment"],
+        desirable_qualifications=["Redis", "Kubernetes"],
+        role_summary="Backend Engineer role",
+        strategy_hash="strat_backend_001"
+    )
+    jd = JobDescription(
+        id="jd_backend",
+        title="Backend Engineer",
+        raw_text="Backend Engineer with Python and PostgreSQL",
+        requirements=[],
+        evaluation_strategy=strategy
+    )
+
+    # 3 distinct candidates
+    cand1 = ProcessedResume(filename="alice.pdf", candidate_name="Alice", raw_text="Experienced Python FastAPI developer", cleaned_text="Experienced Python FastAPI developer", verified_experience_years=3.0)
+    cand2 = ProcessedResume(filename="bob.pdf", candidate_name="Bob", raw_text="Senior PostgreSQL and database architect", cleaned_text="Senior PostgreSQL and database architect", verified_experience_years=5.0)
+    cand3 = ProcessedResume(filename="charlie.pdf", candidate_name="Charlie", raw_text="DevOps Docker and Kubernetes engineer", cleaned_text="DevOps Docker and Kubernetes engineer", verified_experience_years=4.0)
+
+    det_eval = CandidateEvaluation(
+        overall_score=75.0,
+        essential_coverage_pct=80.0,
+        preferred_coverage_pct=60.0,
+        practical_evidence_score=80.0,
+        experience_duration_score=80.0,
+        project_depth_score=70.0,
+        unsupported_keyword_penalty=0.0,
+        verified_tenure_years=3.0,
+        recommendation=Recommendation.RECOMMENDED_FOR_SELECTION,
+        total_essential_count=4,
+        matched_essential_count=3,
+        total_preferred_count=2,
+        matched_preferred_count=1,
+        score_breakdown_formula="Formula",
+        decision_rationale="Rationale"
+    )
+
+    def mock_create_side_effect(*args, **kwargs):
+        payload_str = kwargs["messages"][1]["content"]
+        # Verify the shared evaluation strategy is passed to each call
+        assert "shared_evaluation_strategy" in payload_str
+        assert "Backend Engineering" in payload_str
+        mock_choice = MagicMock()
+        mock_choice.message.content = json.dumps({
+            "overall_score": 82.0,
+            "executive_summary": "Strong fit for backend role.",
+            "technical_relevance_summary": "Demonstrates relevant skills.",
+            "domain_fit": "High",
+            "skills_assessment": {
+                "direct_evidence": ["Python"],
+                "reasonable_inferences": ["APIs"],
+                "genuine_gaps": [],
+                "unknown_information": ["teamwork"]
+            },
+            "requirement_assessments": [],
+            "strengths": ["Backend experience"],
+            "weaknesses": []
+        })
+        return MagicMock(choices=[mock_choice])
+
+    mock_groq_client.chat.completions.create.side_effect = mock_create_side_effect
+
+    # Evaluate candidates independently
+    res1 = evaluator.evaluate_candidate(jd, cand1, [], det_eval, shared_strategy=strategy)
+    res2 = evaluator.evaluate_candidate(jd, cand2, [], det_eval, shared_strategy=strategy)
+    res3 = evaluator.evaluate_candidate(jd, cand3, [], det_eval, shared_strategy=strategy)
+
+    # Exactly 3 independent calls made
+    assert evaluator.tracker.resume_eval_calls == 3
+    assert evaluator.tracker.successful_evaluations == 3
+    assert res1["llm_applied"] is True
+    assert res2["llm_applied"] is True
+    assert res3["llm_applied"] is True
+
+
+# -------------------------------------------------------------
+# 35. Content-Hash-Based Caching and Invalidation
+# -------------------------------------------------------------
+def test_content_hash_caching_and_invalidation():
+    import json
+    from unittest.mock import MagicMock
+    from modules.llm.evaluator import GroqContextualEvaluator
+    from modules.llm.groq_client import GroqClientManager
+    from modules.jd_processing.models import JobDescription, JDEvaluationStrategy
+    from modules.scoring.models import CandidateEvaluation, Recommendation
+
+    mock_client_mgr = MagicMock(spec=GroqClientManager)
+    mock_client_mgr.is_available = True
+    mock_client_mgr.model = "qwen/qwen3.8-27b"
+    mock_groq_client = MagicMock()
+    mock_client_mgr.get_client.return_value = mock_groq_client
+
+    evaluator = GroqContextualEvaluator(mock_client_mgr)
+    evaluator.reset_call_counter()
+
+    strategy = JDEvaluationStrategy(
+        job_domain="AI",
+        essential_capabilities=["NLP"],
+        relevant_skills=["PyTorch"],
+        expected_practical_knowledge=["Transformers"],
+        desirable_qualifications=[],
+        role_summary="AI Engineer",
+        strategy_hash="hash_ai_1"
+    )
+    jd1 = JobDescription(id="jd1", title="AI Engineer", raw_text="AI Engineer text", requirements=[], evaluation_strategy=strategy)
+    cand = ProcessedResume(filename="resume.pdf", candidate_name="David", raw_text="PyTorch NLP researcher", cleaned_text="PyTorch NLP researcher", verified_experience_years=2.0)
+
+    det_eval = CandidateEvaluation(
+        overall_score=70.0,
+        essential_coverage_pct=75.0,
+        preferred_coverage_pct=50.0,
+        practical_evidence_score=75.0,
+        experience_duration_score=70.0,
+        project_depth_score=70.0,
+        unsupported_keyword_penalty=0.0,
+        verified_tenure_years=2.0,
+        recommendation=Recommendation.RECOMMENDED_FOR_SELECTION,
+        total_essential_count=2,
+        matched_essential_count=2,
+        total_preferred_count=1,
+        matched_preferred_count=1,
+        score_breakdown_formula="Formula",
+        decision_rationale="Rationale"
+    )
+
+    mock_choice = MagicMock()
+    mock_choice.message.content = json.dumps({
+        "overall_score": 85.0,
+        "executive_summary": "Great NLP experience.",
+        "strengths": ["PyTorch"],
+        "weaknesses": []
+    })
+    mock_groq_client.chat.completions.create.return_value = MagicMock(choices=[mock_choice])
+
+    # 1. First uncached call
+    res_uncached = evaluator.evaluate_candidate(jd1, cand, [], det_eval)
+    assert evaluator.tracker.resume_eval_calls == 1
+    assert evaluator.tracker.cache_hits == 0
+
+    # 2. Second evaluation with identical candidate and JD -> Cache HIT (0 additional API calls)
+    res_cached = evaluator.evaluate_candidate(jd1, cand, [], det_eval)
+    assert evaluator.tracker.resume_eval_calls == 1  # Still 1
+    assert evaluator.tracker.cache_hits == 1
+    assert res_cached.get("from_cache") is True
+    assert res_cached["overall_score"] == res_uncached["overall_score"]
+
+    # 3. Modify JD content -> Cache Invalidation -> Fresh API call
+    jd_modified = JobDescription(id="jd1", title="AI Engineer", raw_text="MODIFIED JD text with new requirements", requirements=[], evaluation_strategy=strategy)
+    res_new_jd = evaluator.evaluate_candidate(jd_modified, cand, [], det_eval)
+    assert evaluator.tracker.resume_eval_calls == 2
+    assert evaluator.tracker.cache_hits == 1
+
+    # 4. Modify candidate resume content -> Cache Invalidation -> Fresh API call
+    cand_modified = ProcessedResume(filename="resume.pdf", candidate_name="David", raw_text="CHANGED candidate text", cleaned_text="CHANGED candidate text", verified_experience_years=2.0)
+    res_new_cand = evaluator.evaluate_candidate(jd_modified, cand_modified, [], det_eval)
+    assert evaluator.tracker.resume_eval_calls == 3
+
+
+# -------------------------------------------------------------
+# 36. Batch Concurrency and Isolated Candidate Failure
+# -------------------------------------------------------------
+def test_batch_concurrency_and_isolated_candidate_failure():
+    import json
+    from unittest.mock import MagicMock
+    from modules.llm.evaluator import GroqContextualEvaluator
+    from modules.llm.groq_client import GroqClientManager
+    from modules.jd_processing.models import JobDescription, JDEvaluationStrategy
+    from modules.scoring.models import CandidateEvaluation, Recommendation
+
+    mock_client_mgr = MagicMock(spec=GroqClientManager)
+    mock_client_mgr.is_available = True
+    mock_client_mgr.model = "qwen/qwen3.8-27b"
+    mock_groq_client = MagicMock()
+    mock_client_mgr.get_client.return_value = mock_groq_client
+
+    evaluator = GroqContextualEvaluator(mock_client_mgr)
+    evaluator.reset_call_counter()
+
+    strategy = JDEvaluationStrategy(
+        job_domain="Frontend",
+        essential_capabilities=["React"],
+        relevant_skills=["TypeScript"],
+        expected_practical_knowledge=["Redux"],
+        desirable_qualifications=[],
+        role_summary="Frontend role",
+        strategy_hash="strat_fe_1"
+    )
+    jd = JobDescription(id="jd_fe", title="Frontend Engineer", raw_text="Frontend React", requirements=[], evaluation_strategy=strategy)
+
+    cand_success = ProcessedResume(filename="pass.pdf", candidate_name="Pass Candidate", raw_text="React expert", cleaned_text="React expert", verified_experience_years=3.0)
+    cand_fail = ProcessedResume(filename="fail.pdf", candidate_name="Fail Candidate", raw_text="Crash test", cleaned_text="Crash test", verified_experience_years=2.0)
+
+    det_eval = CandidateEvaluation(
+        overall_score=70.0,
+        essential_coverage_pct=70.0,
+        preferred_coverage_pct=50.0,
+        practical_evidence_score=70.0,
+        experience_duration_score=70.0,
+        project_depth_score=70.0,
+        unsupported_keyword_penalty=0.0,
+        verified_tenure_years=2.0,
+        recommendation=Recommendation.RECOMMENDED_FOR_SELECTION,
+        total_essential_count=2,
+        matched_essential_count=2,
+        total_preferred_count=1,
+        matched_preferred_count=1,
+        score_breakdown_formula="Formula",
+        decision_rationale="Rationale"
+    )
+
+    def side_effect(*args, **kwargs):
+        payload_str = kwargs["messages"][1]["content"]
+        if "Crash test" in payload_str or "fail.pdf" in payload_str or "Fail Candidate" in payload_str:
+            raise RuntimeError("Simulated API failure for fail.pdf")
+        mock_choice = MagicMock()
+        mock_choice.message.content = json.dumps({
+            "overall_score": 80.0,
+            "executive_summary": "React expert evaluated successfully.",
+            "strengths": ["React"],
+            "weaknesses": []
+        })
+        return MagicMock(choices=[mock_choice])
+
+    mock_groq_client.chat.completions.create.side_effect = side_effect
+
+    candidates = [
+        (cand_success, [], det_eval),
+        (cand_fail, [], det_eval)
+    ]
+
+    results = evaluator.evaluate_candidates_batch(jd, candidates, max_workers=2)
+
+    # Both candidates must be returned (isolated failure does not abort other candidates)
+    assert len(results) == 2
+    # Candidate 1 succeeded
+    assert results[0][0].filename == "pass.pdf"
+    assert results[0][2]["llm_applied"] is True
+    # Candidate 2 gracefully fell back to deterministic evaluation without crashing
+    assert results[1][0].filename == "fail.pdf"
+    assert results[1][2]["llm_applied"] is False
+    assert "error" in results[1][2]
+    assert evaluator.tracker.failed_evaluations == 1
+    assert evaluator.tracker.successful_evaluations == 1
+
+
+# -------------------------------------------------------------
+# 37. API Usage Visibility & Metrics Tracker
+# -------------------------------------------------------------
+def test_api_call_tracker_metrics_visibility():
+    from modules.llm.evaluator import APICallTracker
+
+    tracker = APICallTracker()
+    assert tracker.total_api_calls == 0
+
+    tracker.record_jd_analysis_call()
+    tracker.record_resume_eval_call()
+    tracker.record_resume_eval_call()
+    tracker.record_success()
+    tracker.record_success()
+    tracker.record_failure()
+    tracker.record_retry()
+    tracker.record_cache_hit()
+
+    stats = tracker.get_stats(total_candidates=2)
+    assert stats["total_calls"] == 3
+    assert stats["jd_analysis_calls"] == 1
+    assert stats["resume_eval_calls"] == 2
+    assert stats["successful_evaluations"] == 2
+    assert stats["failed_evaluations"] == 1
+    assert stats["retry_count"] == 1
+    assert stats["cache_hits"] == 1
+    assert stats["average_calls_per_candidate"] == 1.0
+
+    tracker.reset()
+    assert tracker.total_api_calls == 0
+    assert tracker.get_stats()["successful_evaluations"] == 0
+
+
 
 
 

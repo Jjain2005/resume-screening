@@ -1,4 +1,19 @@
-from .models import JobDescription, RequirementItem, RequirementType, RequirementPriority
+from .models import (
+    JobDescription,
+    RequirementItem,
+    RequirementType,
+    RequirementPriority,
+    MatchingLogic,
+    JDEvaluationStrategy
+)
 from .parser import JobDescriptionParser
 
-__all__ = ["JobDescription", "RequirementItem", "RequirementType", "RequirementPriority", "JobDescriptionParser"]
+__all__ = [
+    "JobDescription",
+    "RequirementItem",
+    "RequirementType",
+    "RequirementPriority",
+    "MatchingLogic",
+    "JDEvaluationStrategy",
+    "JobDescriptionParser"
+]
